@@ -63,7 +63,7 @@ class PhotosViewController: UICollectionViewController {
       .skipWhile { $0 == false }
       .take(1)
       .subscribe(onNext: { [weak self] _ in
-        self?.photos = PhotosViewController.loadPhotos()
+//        self?.photos = PhotosViewController.loadPhotos()
         DispatchQueue.main.async {
           self?.collectionView?.reloadData()
         }
@@ -85,7 +85,7 @@ class PhotosViewController: UICollectionViewController {
   private func errorMessage() {
     alert(title: "No access to Camera Roll",
           text: "You can grant access to Combinestagram from the Settings app")
-      .take(5.0, scheduler: MainScheduler.instance)
+      .take(DispatchTimeInterval.seconds(5), scheduler: MainScheduler.instance)
       .subscribe(onDisposed: { [weak self] in
         self?.dismiss(animated: true, completion: nil)
         _ = self?.navigationController?.popViewController(animated: true)

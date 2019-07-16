@@ -62,35 +62,7 @@ example(of: "Challenge 1") {
 
   let input = Variable<String>("")
 
-  // Add your code here
   
-   input.asObservable()
-    .map({ convert($0) })
-    .unwrap()
-    .skipWhile({ $0 == 0 })
-    .take(10)
-    .toArray()
-    .map(format)
-    .map(dial)
-    .subscribe(onNext: {
-      print($0)
-    })
-    .disposed(by: disposeBag)
-
-  input.value = ""
-  input.value = "0"
-  input.value = "408"
-
-  input.value = "6"
-  input.value = ""
-  input.value = "0"
-  input.value = "3"
-
-  "JKL1A1B".characters.forEach {
-    input.value = "\($0)"
-  }
-
-  input.value = "9"
   
 }
 

@@ -45,7 +45,7 @@ class ViewController: UIViewController {
     let searchText = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
     let temperature = scaleSwitch.rx.controlEvent(.valueChanged).asObservable()
     
-    let search = Observable.from([searchText, temperature])
+    let search: Driver<ApiController.Weather> = Observable.from([searchText, temperature])
       .merge()
       .map( { self.searchCityName.text } )
       .flatMap({ (text) in

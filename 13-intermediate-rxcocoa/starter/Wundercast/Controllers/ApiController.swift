@@ -84,7 +84,7 @@ class ApiController {
     
     return Observable.from(weathers)
                      .merge()
-                     .toArray()
+                     .toArray().asObservable()
   }
 
   //MARK: - Private Methods
@@ -119,7 +119,7 @@ class ApiController {
 
     let session = URLSession.shared
 
-    return session.rx.data(request: request).map { JSON(data: $0) }
+    return session.rx.data(request: request).map {try! JSON(data: $0) }
   }
 
   /**
@@ -161,9 +161,12 @@ class ApiController {
         CLLocationCoordinate2D(latitude: lat - 0.25, longitude: lon - 0.25),
         CLLocationCoordinate2D(latitude: lat + 0.25, longitude: lon + 0.25)
       ]
-      let points = coordinates.map { MKMapPointForCoordinate($0) }
+        let points = coordinates.map { MKMapPoint($0) }
       let rects = points.map { MKMapRect(origin: $0, size: MKMapSize(width: 0, height: 0)) }
-      let fittingRect = rects.reduce(MKMapRectNull, MKMapRectUnion)
+        let fittingRect = rects.reduce(MKMapRect.null) { (result, rect) in
+            print("!!!ddd")
+            return result.union(rect)
+        }
       return Overlay(icon: icon, coordinate: coordinate, boundingMapRect: fittingRect)
     }
 
@@ -235,7 +238,7 @@ public func iconNameToChar(icon: String) -> String {
 
 fileprivate func imageFromText(text: NSString, font: UIFont) -> UIImage {
 
-  let size = text.size(attributes: [NSFontAttributeName: font])
+    let size = text.size(withAttributes: [NSAttributedString.Key.font: font])
 
   if (UIGraphicsBeginImageContextWithOptions != nil) {
     UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
@@ -243,7 +246,7 @@ fileprivate func imageFromText(text: NSString, font: UIFont) -> UIImage {
     UIGraphicsBeginImageContext(size)
   }
 
-  text.draw(at: CGPoint(x: 0, y:0), withAttributes: [NSFontAttributeName: font])
+    text.draw(at: CGPoint(x: 0, y:0), withAttributes: [NSAttributedString.Key.font: font])
 
   let image = UIGraphicsGetImageFromCurrentImageContext()
   UIGraphicsEndImageContext()

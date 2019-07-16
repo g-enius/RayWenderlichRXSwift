@@ -25,25 +25,41 @@ import MapKit
 import RxSwift
 import RxCocoa
 
-class RxMKMapViewDelegateProxy: DelegateProxy, MKMapViewDelegate,
+extension MKMapView: HasDelegate {
+    public typealias Delegate = MKMapViewDelegate
+}
+
+class RxMKMapViewDelegateProxy: DelegateProxy<MKMapView, MKMapViewDelegate>, MKMapViewDelegate,
 DelegateProxyType {
-  
-  class func currentDelegateFor(_ object: AnyObject) -> AnyObject? {
-    let mapView: MKMapView = (object as? MKMapView)!
-    return mapView.delegate
-  }
-  
-  class func setCurrentDelegate(_ delegate: AnyObject?, toObject object: AnyObject) {
-    let mapView: MKMapView = (object as? MKMapView)!
-    mapView.delegate = delegate as? MKMapViewDelegate
-  }
-  
+    
+    public weak private(set) var mapView: MKMapView?
+    
+    public init(mapView: ParentObject) {
+        self.mapView = mapView
+        super.init(parentObject: mapView, delegateProxy: RxMKMapViewDelegateProxy.self)
+    }
+    
+    static func registerKnownImplementations() {
+        self.register {
+            RxMKMapViewDelegateProxy(mapView: $0)
+        }
+    }
+    
+//    static func currentDelegate(for object: AnyObject) -> Any? {
+//        let mapView: MKMapView = (object as? MKMapView)!
+//        return mapView.delegate
+//    }
+//
+//    static func setCurrentDelegate(_ delegate: Any?, to object: AnyObject) {
+//        let mapView: MKMapView = (object as? MKMapView)!
+//        mapView.delegate = delegate as? MKMapViewDelegate
+//    }
 }
 
 extension Reactive where Base: MKMapView {
   
-  public var delegate: DelegateProxy {
-    return RxMKMapViewDelegateProxy.proxyForObject(base)
+    public var delegate: DelegateProxy<MKMapView, MKMapViewDelegate> {
+    return RxMKMapViewDelegateProxy.proxy(for: base)
   }
   
   public func setDelegate(_ delegate: MKMapViewDelegate) -> Disposable {

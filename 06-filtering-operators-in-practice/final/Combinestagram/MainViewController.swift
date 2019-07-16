@@ -31,28 +31,31 @@ class MainViewController: UIViewController {
   @IBOutlet weak var itemAdd: UIBarButtonItem!
 
   private let bag = DisposeBag()
-  private let images = Variable<[UIImage]>([])
+  private let images = BehaviorSubject<[UIImage]>(value: [])
 
   private var imageCache = [Int]()
 
   override func viewDidLoad() {
     super.viewDidLoad()
-
-    images.asObservable()
-      .throttle(0.5, scheduler: MainScheduler.instance)
+    
+    let sharedImages = images
+                        .asObserver().share()
+                        .throttle(DispatchTimeInterval.milliseconds(500),
+                                  scheduler: MainScheduler.instance)
+    sharedImages
       .subscribe(onNext: { [weak self] photos in
         guard let preview = self?.imagePreview else { return }
         preview.image = UIImage.collage(images: photos,
                                         size: preview.frame.size)
+        print("image count", photos.count)
       })
       .disposed(by: bag)
 
-    images.asObservable()
+    sharedImages
       .subscribe(onNext: { [weak self] photos in
         self?.updateUI(photos: photos)
       })
       .disposed(by: bag)
-
   }
 
   private func updateUI(photos: [UIImage]) {
@@ -64,12 +67,14 @@ class MainViewController: UIViewController {
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    
     print("resources: \(RxSwift.Resources.total)")
   }
 
   @IBAction func actionClear() {
-    images.value = []
+    images.onNext([])
     imageCache = []
+    updateNavigationIcon()
   }
 
   @IBAction func actionSave() {
@@ -94,13 +99,13 @@ class MainViewController: UIViewController {
 
     newPhotos
       .takeWhile { [weak self] image in
-        return (self?.images.value.count ?? 0) < 6
+        return (try! self?.images.value().count ?? 0) < 6
       }
       .filter { newImage in
         return newImage.size.width > newImage.size.height
       }
       .filter { [weak self] newImage in
-        let len = UIImagePNGRepresentation(newImage)?.count ?? 0
+        let len = newImage.pngData()?.count ?? 0
         guard self?.imageCache.contains(len) == false else {
           return false
         }
@@ -109,14 +114,16 @@ class MainViewController: UIViewController {
       }
       .subscribe(onNext: { [weak self] newImage in
         guard let images = self?.images else { return }
-        images.value.append(newImage)
+        var imagesArray = try! images.value()
+        imagesArray.append(newImage)
+        images.onNext(imagesArray)
       }, onDisposed: {
         print("completed photo selection")
       })
       .disposed(by: photosViewController.bag)
 
     newPhotos
-      .ignoreElements()
+//      .ignoreElements()
       .subscribe(onCompleted: { [weak self] in
         self?.updateNavigationIcon()
       })
@@ -136,6 +143,7 @@ class MainViewController: UIViewController {
 
   func showMessage(_ title: String, description: String? = nil) {
     alert(title: title, text: description)
+      .take(DispatchTimeInterval.seconds(5), scheduler: MainScheduler.instance)
       .subscribe()
       .disposed(by: bag)
   }

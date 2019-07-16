@@ -36,12 +36,12 @@ class ActivityController: UITableViewController {
 
   private let repo = "ReactiveX/RxSwift"
 
-  fileprivate let events = Variable<[Event]>([])
+  fileprivate let events = BehaviorSubject<[Event]>(value: [])
   fileprivate let bag = DisposeBag()
 
   private let eventsFileURL = cachedFileURL("events.plist")
   private let modifiedFileURL = cachedFileURL("modified.txt")
-  fileprivate let lastModified = Variable<NSString?>(nil)
+  fileprivate let lastModified = BehaviorSubject<NSString?>(value: nil)
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -57,14 +57,14 @@ class ActivityController: UITableViewController {
 
     let eventsArray = (NSArray(contentsOf: eventsFileURL)
       as? [[String: Any]]) ?? []
-    events.value = eventsArray.flatMap(Event.init)
+    events.onNext(eventsArray.compactMap(Event.init))
 
-    lastModified.value = try? NSString(contentsOf: modifiedFileURL, usedEncoding: nil)
+    lastModified.onNext(try? NSString(contentsOf: modifiedFileURL, usedEncoding: nil))
 
     refresh()
   }
 
-  func refresh() {
+    @objc func refresh() {
     DispatchQueue.global(qos: .background).async { [weak self] in
       guard let strongSelf = self else { return }
       strongSelf.fetchEvents(repo: strongSelf.repo)
@@ -93,16 +93,16 @@ class ActivityController: UITableViewController {
       }
       .map { [weak self] url -> URLRequest in
         var request = URLRequest(url: url)
-        if let modifiedHeader = self?.lastModified.value {
+        if let modifiedHeader = try! self?.lastModified.value() {
           request.addValue(modifiedHeader as String,
                            forHTTPHeaderField: "Last-Modified")
         }
         return request
       }
-      .flatMap { request -> Observable<(HTTPURLResponse, Data)> in
+      .flatMap { request -> Observable<(response: HTTPURLResponse, data: Data)> in
         return URLSession.shared.rx.response(request: request)
       }
-      .shareReplay(1)
+      .share(replay: 1)
 
     response
       .filter { response, _ in
@@ -119,7 +119,7 @@ class ActivityController: UITableViewController {
         return objects.count > 0
       }
       .map { objects in
-        return objects.flatMap(Event.init)
+        return objects.compactMap(Event.init)
       }
       .subscribe(onNext: { [weak self] newEvents in
         self?.processEvents(newEvents)
@@ -138,7 +138,7 @@ class ActivityController: UITableViewController {
       }
       .subscribe(onNext: { [weak self] modifiedHeader in
         guard let strongSelf = self else { return }
-        strongSelf.lastModified.value = modifiedHeader
+        strongSelf.lastModified.onNext(modifiedHeader)
         try? modifiedHeader.write(to: strongSelf.modifiedFileURL, atomically: true,
                                   encoding: String.Encoding.utf8.rawValue)
       })
@@ -146,12 +146,12 @@ class ActivityController: UITableViewController {
   }
 
   func processEvents(_ newEvents: [Event]) {
-    var updatedEvents = newEvents + events.value
+    var updatedEvents = newEvents + (try! events.value())
     if updatedEvents.count > 50 {
       updatedEvents = Array<Event>(updatedEvents.prefix(upTo: 50))
     }
 
-    events.value = updatedEvents
+    events.onNext(updatedEvents)
 
     DispatchQueue.main.async { [weak self] in
       self?.tableView.reloadData()
@@ -165,11 +165,11 @@ class ActivityController: UITableViewController {
 
   // MARK: - Table Data Source
   override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    return events.value.count
+    return try! events.value().count
   }
 
   override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let event = events.value[indexPath.row]
+    let event = try! events.value()[indexPath.row]
 
     let cell = tableView.dequeueReusableCell(withIdentifier: "Cell")!
     cell.textLabel?.text = event.name

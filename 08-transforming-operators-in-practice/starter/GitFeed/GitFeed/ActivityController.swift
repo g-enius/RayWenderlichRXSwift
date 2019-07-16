@@ -41,8 +41,8 @@ class ActivityController: UITableViewController {
     private let eventsFileUrl = cachedFileUrl("events.plist")
     private let modifiedFileUrl = cachedFileUrl("modified.txt")
 
-  fileprivate let events = Variable<[Event]>([])
-  fileprivate let bag = DisposeBag()
+    fileprivate let events = Variable<[Event]>([])
+    fileprivate let bag = DisposeBag()
     fileprivate let lastModified = Variable<NSString?>(nil)
 
   override func viewDidLoad() {
@@ -65,46 +65,25 @@ class ActivityController: UITableViewController {
     refresh()
   }
 
-  func refresh() {
+    @objc func refresh() {
     DispatchQueue.global().async {
         self.fetchEvents(repo: self.repo)
     }
   }
 
     func fetchEvents(repo: String) {
-        let response = Observable.from(["https://api.github.com/search/repositories?q=language:swift&per_page=5"])
+        let response = Observable.from([repo])
             .map({ (urlString) -> URL in
-                return URL(string: urlString)!
+                return URL(string: "https://api.github.com/repos/\(urlString)/events")!
             })
             .map({ (url) -> URLRequest in
                 return URLRequest(url: url)
             })
-            .flatMap({ (request) -> Observable<Any> in
-                return URLSession.shared.rx.json(request: request)
-            })
-            .flatMap({ (jsonObj) -> Observable<[String]> in
-                guard let result = jsonObj as? AnyDict,
-                    let items = result["items"] as? [AnyDict] else {
-                        return Observable.never()
-                }
-                return Observable.from(items.map({ $0["full_name"] as! String }))
-            })
-            .map { urlString -> URL in
-                print(urlString)
-                return URL(string: "https://api.github.com/repos/\(urlString)/events?per_page=5")!
-            }
-            .map { [weak self] url -> URLRequest in
-                var request = URLRequest(url: url)
-                if let modifiedHeader = self?.lastModified.value {
-                    request.addValue(modifiedHeader as String,
-                                     forHTTPHeaderField: "Last-Modified")
-                }
-                return request
-            }
-            .flatMap { request -> Observable<(HTTPURLResponse, Data)> in
+            .flatMap{ request -> Observable<(response: HTTPURLResponse, data: Data)> in
+//                return URLSession.shared.rx.json(request: request)
                 return URLSession.shared.rx.response(request: request)
             }
-            .shareReplay(1)
+        .share(replay: 1, scope:.whileConnected)
         
         response
             .filter { response, _ in
@@ -121,9 +100,10 @@ class ActivityController: UITableViewController {
                 return objects.count > 0
             }
             .map { objects in
-                return objects.flatMap(Event.init)
+                return objects.compactMap(Event.init)
             }
             .subscribe(onNext: { [weak self] newEvents in
+                
                 self?.processEvents(newEvents)
             })
             .disposed(by: bag)
@@ -161,9 +141,9 @@ class ActivityController: UITableViewController {
         
         DispatchQueue.main.async {
             self.tableView.reloadData()
+            self.refreshControl?.endRefreshing()
         }
         
-        refreshControl?.endRefreshing()
         
         let eventsArray = updatedEvents.map({ $0.dictionary }) as NSArray
         eventsArray.write(to: eventsFileUrl, atomically: true)

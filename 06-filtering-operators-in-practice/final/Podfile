@@ -1,7 +1,7 @@
 use_frameworks!
 
 target 'Combinestagram' do
-    pod 'RxSwift', '~> 3.4'
+    pod 'RxSwift'
 end
 
 post_install do |installer|

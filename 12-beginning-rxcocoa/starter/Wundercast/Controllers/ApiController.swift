@@ -100,8 +100,8 @@ class ApiController {
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
     let session = URLSession.shared
-
-    return session.rx.data(request: request).map { JSON(data: $0) }
+    
+    return session.rx.data(request: request).map { try! JSON(data: $0) }
   }
 
 }

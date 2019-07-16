@@ -80,7 +80,7 @@ class ViewController: UIViewController {
     let searchInput =
     searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
       .map({ self.searchCityName.text })
-      .filter({ ($0 ?? "").characters.count > 0 })
+      .filter({ ($0 ?? "").count > 0 })
     
     let textSearch = searchInput.flatMap { (text) in
       return ApiController.shared.currentWeather(city: text ?? "Error")

@@ -23,6 +23,11 @@
 import Foundation
 import UIKit
 import RxSwift
+import PhotosUI
+
+enum Errors: Error {
+    case couldNotSavePhoto
+}
 
 class PhotoWriter: NSObject {
   typealias Callback = (NSError?)->Void
@@ -33,23 +38,39 @@ class PhotoWriter: NSObject {
     self.callback = callback
   }
   
-  func image(_ image: UIImage, didFinishSavingWithError error: NSError?,
-             contextInfo: UnsafeRawPointer) {
-    callback(error)
-  }
-  
-  static func save(_ image: UIImage) -> Observable<Void> {
+//    @objc func image(_ image: UIImage, didFinishSavingWithError error: NSError?,
+//             contextInfo: UnsafeRawPointer) {
+//    callback(error)
+//  }
+//
+  static func save(_ image: UIImage) -> Observable<String> {
     return Observable.create({ observer in
-      let writer = PhotoWriter(callback: { error in
-        if let error = error {
-          observer.onError(error)
-        } else {
-          observer.onCompleted()
-        }
-      })
-      UIImageWriteToSavedPhotosAlbum(image, writer,
-                                     #selector(PhotoWriter.image(_:didFinishSavingWithError:contextInfo:)),
-                                     nil)
+        var savedAssetId: String?
+        PHPhotoLibrary.shared().performChanges({
+            let request = PHAssetChangeRequest.creationRequestForAsset(from: image)
+            savedAssetId = request.placeholderForCreatedAsset?.localIdentifier
+            
+        }, completionHandler: { success, error in
+            DispatchQueue.main.async {
+                if success, let id = savedAssetId {
+                    observer.onNext(id)
+                    observer.onCompleted()
+                } else {
+                    observer.onError(error ?? Errors.couldNotSavePhoto)
+                }
+            }
+        })
+            
+//      let writer = PhotoWriter(callback: { error in
+//        if let error = error {
+//          observer.onError(error)
+//        } else {
+//          observer.onCompleted()
+//        }
+//      })
+//      UIImageWriteToSavedPhotosAlbum(image, writer,
+//                                     #selector(PhotoWriter.image(_:didFinishSavingWithError:contextInfo:)),
+//                                     nil)
       return Disposables.create()
     })
   }
