@@ -164,7 +164,6 @@ class ApiController {
         let points = coordinates.map { MKMapPoint($0) }
       let rects = points.map { MKMapRect(origin: $0, size: MKMapSize(width: 0, height: 0)) }
         let fittingRect = rects.reduce(MKMapRect.null) { (result, rect) in
-            print("!!!ddd")
             return result.union(rect)
         }
       return Overlay(icon: icon, coordinate: coordinate, boundingMapRect: fittingRect)

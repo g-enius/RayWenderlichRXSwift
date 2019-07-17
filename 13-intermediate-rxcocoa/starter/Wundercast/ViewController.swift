@@ -97,9 +97,9 @@ class ViewController: UIViewController {
       .disposed(by: bag)
     
     let mapInput = mapView.rx.regionDidChangeAnimated
-      .skip(1)
-      .map { (_) in
-        self.mapView.centerCoordinate
+        .skip(1)//“skip(1) prevents the application from firing a search right after the mapView has initialized.”
+        .map { (_) in
+            self.mapView.centerCoordinate
     }
     
     let mapSearch = mapInput.flatMap { (coordinate) in
@@ -121,6 +121,12 @@ class ViewController: UIViewController {
     search.map({ [$0.overlay()] })
       .drive(mapView.rx.overlays)
       .disposed(by: bag)
+    
+//    “The difference between Driver and Signal is a bit like between BehaviorSubject and PublishSubject. After you’ve written RxSwift code for a while, you usually figure out the nuances of when to use which.
+//    To help you decide which to use, simply ask yourself: “Do I need a replay of the last event when I connect to the resource?"
+//    If your answer is no, then Signal is a good option; otherwise, Driver is the solution.”
+//    
+//    Excerpt From: By Marin Todorov. “RxSwift - Reactive Programming with Swift.” Apple Books.
     
     let running = Observable.from([searchInput.map({ _ in true }),
                                    geoInput.map({ _ in true }),

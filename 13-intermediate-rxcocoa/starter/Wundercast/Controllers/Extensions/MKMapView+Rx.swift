@@ -61,7 +61,12 @@ extension Reactive where Base: MKMapView {
     public var delegate: DelegateProxy<MKMapView, MKMapViewDelegate> {
     return RxMKMapViewDelegateProxy.proxy(for: base)
   }
-  
+    //“Wrapping a delegate that has a return type in Rx is a very hard task, for two reasons:
+//    Delegate methods with a return type are not meant for observation, but for customization of the behavior.
+//    Defining an automatic default value which would work in any case is a non-trivial task.
+//    ”
+//    
+//    Excerpt From: By Marin Todorov. “RxSwift - Reactive Programming with Swift.” Apple Books. 
   public func setDelegate(_ delegate: MKMapViewDelegate) -> Disposable {
     return RxMKMapViewDelegateProxy.installForwardDelegate(
       delegate,
@@ -69,11 +74,13 @@ extension Reactive where Base: MKMapView {
       onProxyForObject: self.base)
   }
   
-  var overlays: UIBindingObserver<Base, [MKOverlay]> {
-    return UIBindingObserver(UIElement: self.base, binding: { (mapView, overlays) in
+    //“Using Binder gives you the opportunity to use the bind or drive functions — very convenient!”
+    
+    var overlays: Binder<[MKOverlay]> {
+    return Binder(self.base) { mapView, overlays in
       mapView.removeOverlays(mapView.overlays)
       mapView.addOverlays(overlays)
-    })
+    }
   }
   
   public var regionDidChangeAnimated: ControlEvent<Bool> {
@@ -87,11 +94,11 @@ extension Reactive where Base: MKMapView {
   
   // Challenge 1
   
-  var givenLocation: UIBindingObserver<Base, CLLocationCoordinate2D> {
-    return UIBindingObserver(UIElement: self.base, binding: { (mapView, coordinate) in
+  var givenLocation: Binder<CLLocationCoordinate2D> {
+    return Binder(self.base) { mapView, coordinate in
       let span = MKCoordinateSpan(latitudeDelta: 2, longitudeDelta: 2)
       mapView.region = MKCoordinateRegion(center: coordinate, span: span)
-    })
+    }
   }
   
 }
