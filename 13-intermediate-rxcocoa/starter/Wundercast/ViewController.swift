@@ -45,13 +45,8 @@ class ViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     
-    locationManager.rx.didUpdateLocations
-      .subscribe(onNext: { (locations) in
-        print(locations)
-      })
-      .disposed(by: bag)
-    
     let currentLocation = locationManager.rx.didUpdateLocations
+        .debug("currentLocation")
       .map { (locations) in
         return locations[0]
       }
@@ -60,10 +55,12 @@ class ViewController: UIViewController {
       }
     
     let geoInput = geoLocationButton.rx.tap.asObservable()
+        .debug("geoInput")
       .do(onNext: {
         self.locationManager.requestWhenInUseAuthorization()
         self.locationManager.startUpdatingLocation()
       })
+        .share(replay: 1, scope: .forever)
     
     let geoLocation = geoInput.flatMap {
       return currentLocation.take(1)
@@ -72,20 +69,26 @@ class ViewController: UIViewController {
     let geoSearch = geoLocation.flatMap { (location) in
       return ApiController.shared.currentWeather(lat:
         location.coordinate.latitude, lon: location.coordinate.longitude)
+        .debug("ApiController: location")
           .catchErrorJustReturn(ApiController.Weather.dummy)
     }
+    .share(replay: 1, scope: .forever)
     
     style()
     
     let searchInput =
     searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
+        .debug("searchInput")
       .map({ self.searchCityName.text })
       .filter({ ($0 ?? "").count > 0 })
+    .share(replay: 1, scope: .forever)
     
     let textSearch = searchInput.flatMap { (text) in
       return ApiController.shared.currentWeather(city: text ?? "Error")
+        .debug("ApiController: text")
         .catchErrorJustReturn(ApiController.Weather.dummy)
     }
+    .share(replay: 1, scope: .forever)
     
     mapButton.rx.tap
       .subscribe(onNext: {
@@ -97,21 +100,25 @@ class ViewController: UIViewController {
       .disposed(by: bag)
     
     let mapInput = mapView.rx.regionDidChangeAnimated
+        .debug("regionDidChangeAnimated")
         .skip(1)//“skip(1) prevents the application from firing a search right after the mapView has initialized.”
         .map { (_) in
             self.mapView.centerCoordinate
     }
+    .share(replay: 1, scope: .forever)
     
     let mapSearch = mapInput.flatMap { (coordinate) in
       return ApiController.shared.currentWeather(lat: coordinate.latitude, lon: coordinate.longitude)
+        .debug("ApiController: coordinate")
         .catchErrorJustReturn(ApiController.Weather.dummy)
+        .share(replay: 1, scope: .forever)
     }
     
-    let surroundingMapSearch = mapInput.flatMap { (coordinate) in
-      return ApiController.shared.currentWeatherAround(lat: coordinate.latitude, lon: coordinate.longitude)
-        .catchErrorJustReturn([ApiController.Weather.dummy])
-    }
-    
+//    let surroundingMapSearch = mapInput.flatMap { (coordinate) in
+//      return ApiController.shared.currentWeatherAround(lat: coordinate.latitude, lon: coordinate.longitude)
+//        .catchErrorJustReturn([ApiController.Weather.dummy])
+//    }
+//
     let search = Observable.from([geoSearch,
                                   textSearch,
                                   mapSearch])
@@ -119,7 +126,7 @@ class ViewController: UIViewController {
                            .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
     
     search.map({ [$0.overlay()] })
-      .drive(mapView.rx.overlays)
+      .drive(mapView.rx.overlays)//Tap -> subscribed
       .disposed(by: bag)
     
 //    “The difference between Driver and Signal is a bit like between BehaviorSubject and PublishSubject. After you’ve written RxSwift code for a while, you usually figure out the nuances of when to use which.
@@ -138,7 +145,7 @@ class ViewController: UIViewController {
     
     running
       .skip(1)
-      .drive(activityIndicator.rx.isAnimating)
+      .drive(activityIndicator.rx.isAnimating) //Tap -> subscribed
       .disposed(by: bag)
 
     search.map { "\($0.temperature)° C" }
@@ -157,27 +164,30 @@ class ViewController: UIViewController {
       .drive(cityNameLabel.rx.text)
       .disposed(by: bag)
     
-    // Challenge 1
+//    // Challenge 1
+//
+//    let geoAndTextSearch = Observable.from([geoSearch, textSearch])
+//      .merge()
+//      .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
+//
+//
+//    geoAndTextSearch.map({ $0.coordinate })
+//      .drive(mapView.rx.givenLocation) //Tap -> subscribed
+//      .disposed(by: bag)
+//
+//    // Challenge 2
+//
+//    mapInput.flatMap { (location) in
+//      return ApiController.shared.currentWeatherAround(lat: location.latitude, lon: location.longitude)
+//        .debug("ApiController currentWeatherAround")
+//        .catchErrorJustReturn([])
+//        .share(replay: 1, scope: .forever)
+//      }
+//      .asDriver(onErrorJustReturn: [])
+//      .map({ $0.map({ $0.overlay() }) })
+//      .drive(mapView.rx.overlays)
+//      .disposed(by: bag)
     
-    let geoAndTextSearch = Observable.from([geoSearch, textSearch])
-      .merge()
-      .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
-    
-    
-    geoAndTextSearch.map({ $0.coordinate })
-      .drive(mapView.rx.givenLocation)
-      .disposed(by: bag)
-    
-    // Challenge 2
-
-    mapInput.flatMap { (location) in
-      return ApiController.shared.currentWeatherAround(lat: location.latitude, lon: location.longitude)
-        .catchErrorJustReturn([])
-      }
-      .asDriver(onErrorJustReturn: [])
-      .map({ $0.map({ $0.overlay() }) })
-      .drive(mapView.rx.overlays)
-      .disposed(by: bag)
     
   }
 
