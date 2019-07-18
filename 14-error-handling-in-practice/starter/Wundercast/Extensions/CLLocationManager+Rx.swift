@@ -25,29 +25,49 @@ import CoreLocation
 import RxSwift
 import RxCocoa
 
-class RxCLLocationManagerDelegateProxy : DelegateProxy, CLLocationManagerDelegate, DelegateProxyType {
-  class func currentDelegateFor(_ object: AnyObject) -> AnyObject? {
-    let locationManager: CLLocationManager = object as! CLLocationManager
-    return locationManager.delegate
-  }
+extension CLLocationManager: HasDelegate {
+    public typealias Delegate = CLLocationManagerDelegate
+}
 
-  class func setCurrentDelegate(_ delegate: AnyObject?, toObject object: AnyObject) {
-    let locationManager: CLLocationManager = object as! CLLocationManager
-    locationManager.delegate = delegate as? CLLocationManagerDelegate
-  }
+class RxCLLocationManagerDelegateProxy: DelegateProxy<CLLocationManager, CLLocationManagerDelegate>,
+CLLocationManagerDelegate, DelegateProxyType {
+    
+    //    public weak private(set) var locationManager: CLLocationManager?
+    
+    public init(locationManager: ParentObject) {
+        //        self.locationManager = locationManager
+        super.init(parentObject: locationManager, delegateProxy: RxCLLocationManagerDelegateProxy.self)
+    }
+    
+    static func registerKnownImplementations() {
+        self.register {
+            RxCLLocationManagerDelegateProxy(locationManager: $0)
+        }
+    }
+    
+    //    static func currentDelegate(for object: AnyObject) -> Any? {
+    //        let locationManager: CLLocationManager = object as! CLLocationManager
+    //        return locationManager.delegate
+    //    }
+    //
+    //    static func setCurrentDelegate(_ delegate: Any?, to object: AnyObject) {
+    //        let locationManager: CLLocationManager = object as! CLLocationManager
+    //        locationManager.delegate = delegate as? CLLocationManagerDelegate
+    //    }
 }
 
 extension Reactive where Base: CLLocationManager {
-
-  var delegate: DelegateProxy {
-    return RxCLLocationManagerDelegateProxy.proxyForObject(base)
-  }
-
-  var didUpdateLocations: Observable<[CLLocation]> {
-    return delegate.methodInvoked(#selector(CLLocationManagerDelegate.locationManager(_:didUpdateLocations:)))
-      .map { a in
-        return a[1] as! [CLLocation]
+    
+    var delegate: DelegateProxy<CLLocationManager, CLLocationManagerDelegate> {
+        return RxCLLocationManagerDelegateProxy.proxy(for: base)
     }
-  }
-
+    
+    var didUpdateLocations: Observable<[CLLocation]> {
+        return
+            delegate.methodInvoked(#selector(CLLocationManagerDelegate.locationManager(_:didUpdateLocations:)))
+                .map({ (parameters) in
+                    return parameters[1] as! [CLLocation]
+                })
+    }
+    
 }

@@ -64,7 +64,7 @@ class ViewController: UIViewController {
         return locations[0]
       }
       .filter() { location in
-        return location.horizontalAccuracy == kCLLocationAccuracyNearestTenMeters
+        return location.horizontalAccuracy < kCLLocationAccuracyHundredMeters
     }
 
     let geoInput = geoLocationButton.rx.tap.asObservable().do(onNext: {
@@ -86,9 +86,10 @@ class ViewController: UIViewController {
     let maxAttempts = 4
     
     let retryHandler: (Observable<Error>) -> Observable<Int> = { e in
-      return e.flatMapWithIndex({ (error, attempt) -> Observable<Int> in
+      return e.enumerated().flatMap({ (attempt,error) -> Observable<Int> in
         if (error as NSError).code == -1009 {
           return RxReachability.shared.status
+            .debug("retryHandler")
             .filter({ $0 == .online })
             .map({ _ in return 1})
         }
@@ -101,14 +102,14 @@ class ViewController: UIViewController {
             .map({ _ in return 1 })
         }
         print("== retrying after \(attempt + 1) seconds ==")
-        return Observable<Int>.timer(Double(attempt + 1), scheduler: MainScheduler.instance)
+        return Observable<Int>.timer(DispatchTimeInterval.seconds(attempt + 1), scheduler: MainScheduler.instance)
           .take(1)
       })
     }
 
     let searchInput = searchCityName.rx.controlEvent(.editingDidEndOnExit).asObservable()
       .map { self.searchCityName.text }
-      .filter { ($0 ?? "").characters.count > 0 }
+      .filter { ($0 ?? "").count > 0 }
     
     let textSearch = searchInput.flatMap { text in
       return ApiController.shared.currentWeather(city: text ?? "Error")
@@ -193,21 +194,22 @@ class ViewController: UIViewController {
 
   func requestKey() {
 
-    func configurationTextField(textField: UITextField!) {
+    func configurationTextField(textField: UITextField) {
       self.keyTextField = textField
+      self.keyTextField?.text = "62383c0f58aee05199188f60d73e457a"
     }
 
     let alert = UIAlertController(title: "Api Key",
                                   message: "Add the api key:",
-                                  preferredStyle: UIAlertControllerStyle.alert)
+                                  preferredStyle: UIAlertController.Style.alert)
 
     alert.addTextField(configurationHandler: configurationTextField)
 
-    alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler:{ (UIAlertAction) in
+    alert.addAction(UIAlertAction(title: "Ok", style: UIAlertAction.Style.default, handler:{ (UIAlertAction) in
       ApiController.shared.apiKey.onNext(self.keyTextField?.text ?? "")
     }))
 
-    alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertActionStyle.destructive))
+    alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.destructive))
 
     self.present(alert, animated: true)
   }

@@ -30,7 +30,7 @@ class InfoView: UIView {
   private static var sharedView: InfoView!
 
   static func loadFromNib() -> InfoView {
-    let nibName = "\(self)".characters.split{$0 == "."}.map(String.init).last!
+    let nibName = "\(self)".split{$0 == "."}.map(String.init).last!
     let nib = UINib(nibName: nibName, bundle: nil)
     return nib.instantiate(withOwner: self, options: nil).first as! InfoView
   }
@@ -79,7 +79,7 @@ class InfoView: UIView {
     })
   }
 
-  func fadeOut() {
+    @objc func fadeOut() {
 
     // [1] Counter balance previous perfom:with:afterDelay
     NSObject.cancelPreviousPerformRequests(withTarget: self)
