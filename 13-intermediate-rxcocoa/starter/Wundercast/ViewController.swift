@@ -164,31 +164,29 @@ class ViewController: UIViewController {
       .drive(cityNameLabel.rx.text)
       .disposed(by: bag)
     
-//    // Challenge 1
-//
-//    let geoAndTextSearch = Observable.from([geoSearch, textSearch])
-//      .merge()
-//      .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
-//
-//
-//    geoAndTextSearch.map({ $0.coordinate })
-//      .drive(mapView.rx.givenLocation) //Tap -> subscribed
-//      .disposed(by: bag)
-//
-//    // Challenge 2
-//
-//    mapInput.flatMap { (location) in
-//      return ApiController.shared.currentWeatherAround(lat: location.latitude, lon: location.longitude)
-//        .debug("ApiController currentWeatherAround")
-//        .catchErrorJustReturn([])
-//        .share(replay: 1, scope: .forever)
-//      }
-//      .asDriver(onErrorJustReturn: [])
-//      .map({ $0.map({ $0.overlay() }) })
-//      .drive(mapView.rx.overlays)
-//      .disposed(by: bag)
-    
-    
+    // Challenge 1
+
+    let geoAndTextSearch = Observable.from([geoSearch, textSearch])
+      .merge()
+      .asDriver(onErrorJustReturn: ApiController.Weather.dummy)
+
+
+    geoAndTextSearch.map({ $0.coordinate })
+      .drive(mapView.rx.givenLocation) //Tap -> subscribed
+      .disposed(by: bag)
+
+    // Challenge 2
+
+    mapInput.flatMap { (location) in
+      return ApiController.shared.currentWeatherAround(lat: location.latitude, lon: location.longitude)
+        .debug("ApiController currentWeatherAround")
+        .catchErrorJustReturn([])
+        .share(replay: 1, scope: .forever)
+      }
+      .asDriver(onErrorJustReturn: [])
+      .map({ $0.map({ $0.overlay() }) })
+      .drive(mapView.rx.overlays)
+      .disposed(by: bag)
   }
 
   override func viewDidAppear(_ animated: Bool) {

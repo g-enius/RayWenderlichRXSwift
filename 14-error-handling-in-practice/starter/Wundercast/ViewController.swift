@@ -28,6 +28,8 @@ import CoreLocation
 
 typealias Weather = ApiController.Weather
 
+var cachedData = [String: Weather]()
+
 class ViewController: UIViewController {
 
   @IBOutlet weak var keyButton: UIButton!
@@ -89,19 +91,26 @@ class ViewController: UIViewController {
       return e.enumerated().flatMap({ (attempt,error) -> Observable<Int> in
         if (error as NSError).code == -1009 {
           return RxReachability.shared.status
-            .debug("retryHandler")
+            .debug("+++ RxReachability.shared.status")
             .filter({ $0 == .online })
-            .map({ _ in return 1})
+            .map({ _ in
+                return 1
+            })
         }
         else if attempt >= maxAttempts - 1 {
           return Observable.error(error)
         }
         else if let casted = error as? ApiController.ApiError, casted == .invalidKey {
           return ApiController.shared.apiKey
+            .debug("+++ ApiController.shared.apiKey")
             .filter({ $0 != ""})
-            .map({ _ in return 1 })
+            .map({ _ in
+                return 1
+            })
         }
         print("== retrying after \(attempt + 1) seconds ==")
+        
+        //delay a mount of secondes and then emit only two events: OnNext(0), OnCompleted
         return Observable<Int>.timer(DispatchTimeInterval.seconds(attempt + 1), scheduler: MainScheduler.instance)
           .take(1)
       })
@@ -113,24 +122,10 @@ class ViewController: UIViewController {
     
     let textSearch = searchInput.flatMap { text in
       return ApiController.shared.currentWeather(city: text ?? "Error")
-        .do(onNext: { data in
-          if let text = text {
-            self.cache[text] = data
-          }
-        })
-        .do(onNext: { (data) in
-          if let text = text {
-            self.cache[text] = data
-          }
-        }, onError: { [weak self] (e) in
-          guard let strongSelf = self else { return }
-          DispatchQueue.main.async {
-            strongSelf.showError(error: e)
-          }
-        })
+        .cacheOrShowError(key: text ?? "", displayErrorIn: self)
         .retryWhen(retryHandler)
         .catchError { error in
-          if let text = text, let cachedData = self.cache[text] {
+          if let text = text, let cachedData = cachedData[text] {
             return Observable.just(cachedData)
           } else {
             return Observable.just(ApiController.Weather.empty)
@@ -213,21 +208,7 @@ class ViewController: UIViewController {
 
     self.present(alert, animated: true)
   }
-  
-  func showError(error e: Error) {
-    if let e = e as? ApiController.ApiError {
-      switch e {
-      case.cityNotFound:
-        InfoView.showIn(viewController: self, message: "City Name is invalid")
-      case .serverFailure:
-        InfoView.showIn(viewController: self, message: "Server error")
-      case .invalidKey:
-        InfoView.showIn(viewController: self, message: "Key is invalid")
-      }
-    } else {
-      InfoView.showIn(viewController: self, message: "An error occurred")
-    }
-  }
+
 
   // MARK: - Style
 
@@ -239,4 +220,31 @@ class ViewController: UIViewController {
     iconLabel.textColor = UIColor.cream
     cityNameLabel.textColor = UIColor.cream
   }
+}
+
+
+extension ObservableType where Element == Weather {
+    
+    /// Custom cache operator
+    
+    func cacheOrShowError(key: String, displayErrorIn viewController: UIViewController) -> Observable<Element> {
+        return self.observeOn(MainScheduler.instance)
+            .do(onNext: { data in
+                cachedData[key] = data
+            }, onError: { e in
+                if let e = e as? ApiController.ApiError {
+                    switch (e) {
+                        case .cityNotFound:
+                            InfoView.showIn(viewController: viewController, message: "City Name is invalid")
+                        case .serverFailure:
+                            InfoView.showIn(viewController: viewController, message: "Server error")
+                        case .invalidKey:
+                            InfoView.showIn(viewController: viewController, message: "Key is invalid")
+                    }
+                } else {
+                    InfoView.showIn(viewController: viewController, message: "An error occurred")
+                }
+        })
+    }
+    
 }

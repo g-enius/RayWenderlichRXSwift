@@ -82,9 +82,10 @@ class ApiController {
       }
     }
     
-    return Observable.from(weathers)
-                     .merge()
-                     .toArray().asObservable()
+    return Observable.from(weathers) //Observable<Observable<Weather>>
+                     .merge()//Observable<Weather>
+                     .toArray()//Single<[Weather]>
+                     .asObservable()//Observable<[Weather]>
   }
 
   //MARK: - Private Methods
