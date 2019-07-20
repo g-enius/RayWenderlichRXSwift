@@ -33,5 +33,98 @@ class TestingViewModel : XCTestCase {
   override func setUp() {
     super.setUp()
 
+    viewModel = ViewModel()
+    scheduler = ConcurrentDispatchQueueScheduler(qos: .default)
   }
+
+  func testColorIsRedWhenHexStringIsFF0000_async() {
+
+    let disposeBag = DisposeBag()
+
+    // 1
+    let expect = expectation(description: #function)
+
+    // 2
+    let expectedColor = UIColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
+
+    // 3
+    var result: UIColor!
+    
+    // 3
+    viewModel.hexString.accept("#ff0000")
+
+    // 1
+    viewModel.color.asObservable()
+        .debug("====")
+//      .skip(1)
+      .subscribe(onNext: {
+        // 2
+        result = $0
+        expect.fulfill()
+      })
+      .disposed(by: disposeBag)
+
+
+    // 4 不用异步线程就需要阻塞当前线程直到结束,其他三个测试案例就不需要这个
+    waitForExpectations(timeout: 1.0) { error in
+      guard error == nil else {
+        XCTFail(error!.localizedDescription)
+        return
+      }
+      
+      // 5
+      XCTAssertEqual(expectedColor, result)
+    }
+  }
+
+  func testColorIsRedWhenHexStringIsFF0000() {
+
+    // 1
+    let colorObservable = viewModel.color.asObservable()
+        .debug("----")
+        .subscribeOn(scheduler)
+
+    // 2
+    viewModel.hexString.accept("#ff0000")
+
+    // 3
+    do {
+      guard let result = try colorObservable.toBlocking(timeout: 1.0).first() else { return }
+
+      XCTAssertEqual(result, .red)
+    } catch {
+      print(error)
+    }
+  }
+
+
+  func testRgbIs010WhenHexStringIs00FF00() {
+
+    // 1
+    let rgbObservable = viewModel.rgb.asObservable().subscribeOn(scheduler)
+
+    // 2
+    viewModel.hexString.accept("#00ff00")
+
+    // 3
+    let result = try! rgbObservable.toBlocking().first()!
+
+    XCTAssertEqual(0 * 255, result.0)
+    XCTAssertEqual(1 * 255, result.1)
+    XCTAssertEqual(0 * 255, result.2)
+  }
+
+  func testColorNameIsRayWenderlichGreenWhenHexStringIs006636() {
+
+    // 1
+    let colorNameObservable = viewModel.colorName.asObservable().subscribeOn(scheduler)
+
+    // 2
+    viewModel.hexString.accept("#006636")
+
+    // 3
+    XCTAssertEqual("rayWenderlichGreen", try! colorNameObservable.toBlocking().first()!)
+  }
+
+
 }

@@ -48,24 +48,28 @@ class ViewController : UIViewController {
     guard let textField = self.hexTextField else { return }
 
     textField.rx.text.orEmpty
-      .bind(to: viewModel.hexString)
+        .asDriver()
+        .drive(viewModel.hexString)
+//      .bind(to: viewModel.hexString)
       .disposed(by: disposeBag)
 
     for button in buttons {
       button.rx.tap
-        .bind {
+        .asDriver()
+        .drive(onNext: {
+//        .bind{
           var shouldUpdate = false
 
           switch button.titleLabel!.text! {
           case "⊗":
             textField.text = "#"
             shouldUpdate = true
-          case "←" where textField.text!.characters.count > 1:
-            textField.text = String(textField.text!.characters.dropLast())
+          case "←" where textField.text!.count > 1:
+            textField.text = String(textField.text!.dropLast())
             shouldUpdate = true
           case "←":
             break
-          case _ where textField.text!.characters.count < 7:
+          case _ where textField.text!.count < 7:
             textField.text!.append(button.titleLabel!.text!)
             shouldUpdate = true
           default:
@@ -75,8 +79,8 @@ class ViewController : UIViewController {
           if shouldUpdate {
             textField.sendActions(for: .valueChanged)
           }
-        }
-        .addDisposableTo(self.disposeBag)
+        })
+        .disposed(by: self.disposeBag)
     }
 
     viewModel.color
