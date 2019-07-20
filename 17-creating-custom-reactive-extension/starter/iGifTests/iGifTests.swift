@@ -56,12 +56,12 @@ class iGifTests: XCTestCase {
   
 }
 
-extension BlockingObservable {
-  func firstOrNil() -> E? {
-    do {
-      return try first()
-    } catch {
-      return nil
-    }
-  }
-}
+//extension BlockingObservable {
+//  func firstOrNil() -> E? {
+//    do {
+//      return try first()
+//    } catch {
+//      return nil
+//    }
+//  }
+//}

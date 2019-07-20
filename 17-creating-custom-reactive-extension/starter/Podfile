@@ -1,7 +1,7 @@
 use_frameworks!
 
 def my_pods
-  pod 'RxSwift', '~> 3.4'
+  pod 'RxSwift'
   pod 'SwiftyJSON'
   pod 'Gifu'
 end

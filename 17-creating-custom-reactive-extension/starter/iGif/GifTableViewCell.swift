@@ -41,7 +41,7 @@ class GifTableViewCell: UITableViewCell {
   
   func downloadAndDisplay(gif stringUrl: String) {
     guard let url = URL(string: stringUrl) else { return }
-    let request = URLRequest(url: url)
+    _ = URLRequest(url: url)
     activityIndicator.startAnimating()
   }
 }

@@ -28,8 +28,8 @@ print("\n\n\n===== Schedulers =====\n")
 let globalScheduler = ConcurrentDispatchQueueScheduler(queue: DispatchQueue.global())
 let bag = DisposeBag()
 let animal = BehaviorSubject(value: "[dog]")
-
-
+//
+//
 animal
   .subscribeOn(MainScheduler.instance)
   .dump()

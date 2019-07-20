@@ -43,7 +43,7 @@ fileprivate func secondsElapsed() -> String {
 }
 
 extension ObservableType {
-  func dump() -> RxSwift.Observable<Self.E> {
+  func dump() -> RxSwift.Observable<Self.Element> {
     return self.do(onNext: { element in
       let threadName = getThreadName()
       print("\(secondsElapsed())s | [D] \(element) received on \(threadName)")
