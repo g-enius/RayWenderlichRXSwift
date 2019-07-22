@@ -12,6 +12,7 @@ import RxSwift
 import RxCocoa
 import Unbox
 import RealmSwift
+import RxBlocking
 
 @testable import Tweetie
 
@@ -33,8 +34,6 @@ class PersonTimelineViewModelTests: XCTestCase {
   }
 
   func test_whenInitialized_bindsTweets() {
-    let asyncExpect = expectation(description: "fullfill test")
-
     TwitterTestAPI.reset()
 
     let accountSubject = PublishSubject<TwitterAccount.AccountStatus>()
@@ -42,30 +41,15 @@ class PersonTimelineViewModelTests: XCTestCase {
 
     let allTweets = TestData.tweetsJSON
 
-    var values = [Tweet]()
-    let subscription = viewModel.tweets
-      .filter { $0.count == allTweets.count }
-      .drive(onNext: {
-        values = $0
-        asyncExpect.fulfill()
-      })
-
-    accountSubject.onNext(.authorized(TestData.account))
-
-    // why does it need to happen later?
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+    DispatchQueue.main.async {
+      accountSubject.onNext(.authorized(AccessToken()))
       TwitterTestAPI.objects.onNext(allTweets)
-      TwitterTestAPI.objects.onCompleted()
-    })
+    }
 
-    waitForExpectations(timeout: 2.0, handler: { error in
-      XCTAssertNil(error, "error: \(error!.localizedDescription)")
-      XCTAssertTrue(values.count == 3)
-      XCTAssertEqual(values[0].id, 1)
-      XCTAssertEqual(values[1].id, 2)
-      XCTAssertEqual(values[2].id, 3)
-      XCTAssertEqual(TwitterTestAPI.lastMethodCall, "timeline(of:)")
-      subscription.dispose()
-    })
+    let emitted = try! viewModel.tweets.asObservable().take(1).toBlocking(timeout: 1).toArray()
+    XCTAssertEqual(emitted[0].count, 3)
+    XCTAssertEqual(emitted[0][0].id, 1)
+    XCTAssertEqual(emitted[0][1].id, 2)
+    XCTAssertEqual(emitted[0][2].id, 3)
   }
 }

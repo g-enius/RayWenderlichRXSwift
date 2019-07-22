@@ -51,17 +51,26 @@ class PersonTimelineViewController: NSViewController {
 
   func bindUI() {
     //bind the window title
-    //reload the table when tweets come in
+    let username = "@\(viewModel.username)"
+    viewModel.tweets
+        .drive(onNext: { tweets in
+            NSApp.windows.first?.title = tweets.count == 0 ? "None found" : username
+        })
+        .disposed(by: bag)
+    //bind tweets
+    viewModel.tweets
+        .drive(onNext: { [weak self] tweets in
+            self?.tweets = tweets
+            self?.tableView.reloadData()
+        })
+        .disposed(by: bag)
+    
   }
 }
 
 extension PersonTimelineViewController: NSTableViewDataSource {
   func numberOfRows(in tableView: NSTableView) -> Int {
     return tweets.count
-  }
-
-  func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
-    return 56.0
   }
 }
 

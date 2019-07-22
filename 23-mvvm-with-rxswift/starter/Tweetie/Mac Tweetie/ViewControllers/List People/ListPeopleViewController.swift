@@ -55,6 +55,16 @@ class ListPeopleViewController: NSViewController {
       .disposed(by: bag)
 
     //show message when no account available
+    viewModel.people.asDriver()
+        .map { contents -> Bool in
+            if contents == nil {
+                return false
+            } else {
+                return true
+            }
+        }
+        .drive(messageView.rx.isHidden)
+        .disposed(by: bag)
   }
 
   @IBAction func tableViewDidSelectRow(sender: NSTableView) {
@@ -72,9 +82,6 @@ class ListPeopleViewController: NSViewController {
 extension ListPeopleViewController: NSTableViewDataSource {
   func numberOfRows(in tableView: NSTableView) -> Int {
     return viewModel.people.value?.count ?? 0
-  }
-  func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
-    return 68.0
   }
 }
 

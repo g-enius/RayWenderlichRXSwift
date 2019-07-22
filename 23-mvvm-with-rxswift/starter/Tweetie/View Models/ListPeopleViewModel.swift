@@ -63,7 +63,7 @@ class ListPeopleViewModel {
         default: return false
         }
       }
-      .map { account -> ACAccount in
+      .map { account -> AccessToken in
         switch account {
         case .authorized(let acaccount):
           return acaccount

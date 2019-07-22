@@ -21,7 +21,6 @@
  */
 
 import Foundation
-import Accounts
 
 import RxSwift
 import RxCocoa
@@ -54,18 +53,18 @@ class TimelineFetcher {
     self.init(account: account, jsonProvider: apiType.timeline(of: username))
   }
 
-  private init(account: Driver<TwitterAccount.AccountStatus>, jsonProvider: @escaping (ACAccount, TimelineCursor) -> Observable<[JSONObject]>) {
+  private init(account: Driver<TwitterAccount.AccountStatus>, jsonProvider: @escaping (AccessToken, TimelineCursor) -> Observable<[JSONObject]>) {
     //
     // subscribe for the current twitter account
     //
-    let currentAccount: Observable<ACAccount> = account
+    let currentAccount: Observable<AccessToken> = account
       .filter { account in
         switch account {
         case .authorized: return true
         default: return false
         }
       }
-      .map { account -> ACAccount in
+      .map { account -> AccessToken in
         switch account {
         case .authorized(let acaccount):
           return acaccount
@@ -74,9 +73,7 @@ class TimelineFetcher {
       }
       .asObservable()
 
-    //
     // timer that emits a reachable logged account
-    //
     let reachableTimerWithAccount = Observable.combineLatest(
       Observable<Int>.timer(0, period: timerDelay, scheduler: MainScheduler.instance),
       Reachability.rx.reachable,
@@ -84,21 +81,29 @@ class TimelineFetcher {
       paused.asObservable(),
       resultSelector: { _, reachable, account, paused in
         return (reachable && !paused) ? account : nil
-    })
+      })
       .filter { $0 != nil }
       .map { $0! }
 
     let feedCursor = Variable<TimelineCursor>(.none)
 
-    //
     // Re-fetch the timeline
-    //
 
-    timeline = Observable<[Tweet]>.never()
+    timeline = reachableTimerWithAccount
+        .withLatestFrom(feedCursor.asObservable(), resultSelector:
+        { account, cursor in
+        return (account: account, cursor: cursor)
+        })
+        .flatMapLatest(jsonProvider)
+        .map(Tweet.unboxMany)
+        .share(replay: 1, scope: .whileConnected)
 
-    //
     // Store the latest position through timeline
-    //
+
+    timeline
+        .scan(.none, accumulator: TimelineFetcher.currentCursor)
+        .bind(to: feedCursor)
+        .disposed(by: bag)
   }
 
   static func currentCursor(lastCursor: TimelineCursor, tweets: [Tweet]) -> TimelineCursor {

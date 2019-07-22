@@ -26,11 +26,11 @@ import Unbox
 
 class Tweet: Object, Unboxable {
   // MARK: - Properties
-  dynamic var id: Int64 = 0
-  dynamic var text = ""
-  dynamic var name = ""
-  dynamic var created: Date?
-  dynamic var imageUrl = ""
+  @objc dynamic var id: Int64 = 0
+  @objc dynamic var text = ""
+  @objc dynamic var name = ""
+  @objc dynamic var created: Date?
+  @objc dynamic var imageUrl = ""
 
   // MARK: - Meta
   override static func primaryKey() -> String? {

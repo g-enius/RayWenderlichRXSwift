@@ -32,10 +32,17 @@ import Foundation
   }
 #elseif os(OSX)
   import Cocoa
-  
+
+  extension NSStoryboard.Name: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+      self.init(value)
+    }
+  }
+
   extension NSStoryboard {
     func instantiateViewController<T>(ofType type: T.Type) -> T {
-      return instantiateController(withIdentifier: String(describing: type)) as! T
+      let scene = SceneIdentifier(String(describing: type))
+      return instantiateController(withIdentifier: scene) as! T
     }
   }
 #endif

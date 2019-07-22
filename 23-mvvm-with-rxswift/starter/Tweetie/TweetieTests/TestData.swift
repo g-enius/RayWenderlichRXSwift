@@ -21,12 +21,10 @@
  */
 
 import Foundation
-import Accounts
 import Unbox
 @testable import Tweetie
 
 class TestData {
-  static let account = ACAccount()
   static let listId: ListIdentifier = (username:"user" , slug: "slug")
 
   static let personJSON: [String: Any] = [

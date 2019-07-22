@@ -21,57 +21,96 @@
  */
 
 import Foundation
-import Accounts
 
 import RxSwift
 import RxCocoa
 
+import Alamofire
+import Unbox
+
+typealias AccessToken = String
+
 struct TwitterAccount {
+
+  static private var key: String!
+  static private var secret: String!
+  static public func set(key: String, secret: String) {
+    precondition(key != "placeholder", "\n" +
+    """
+      -----------------------------------\n
+      ~> You need to provide your Twitter APP Key and Secret, consult Chapter 23 of the RxSwift book for instructions how to register your own app\n
+      -----------------------------------\n\n
+    """)
+    self.key = key
+    self.secret = secret
+  }
+
+  private struct Token: Unboxable {
+    let tokenString: String
+    init(unboxer: Unboxer) throws {
+      guard try unboxer.unbox(key: "token_type") == "bearer" else {
+        throw Errors.invalidResponse
+      }
+      tokenString = try unboxer.unbox(key: "access_token")
+    }
+  }
+
   // logged or not
   enum AccountStatus {
     case unavailable
-    case authorized(ACAccount)
+    case authorized(AccessToken)
   }
 
   enum Errors: Error {
-    case unableToAccessAccountType
+    case unableToGetToken, invalidResponse
   }
 
   // MARK: - Properties
-  private let accountStore = ACAccountStore()
 
   // MARK: - Getting the current twitter account
-  var `default`: Driver<AccountStatus> {
-    return Observable.create({ observer in
-      guard let type = self.accountStore.accountType(withAccountTypeIdentifier: ACAccountTypeIdentifierTwitter) else {
-        observer.onError(Errors.unableToAccessAccountType)
-        return Disposables.create()
-      }
+  private func oAuth2Token(completion: @escaping (String?)->Void) -> DataRequest {
+    let parameters: Parameters = ["grant_type": "client_credentials"]
+    var headers: HTTPHeaders = ["Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"]
 
-      // emit on any change
-      let notifications = NotificationCenter.default.rx.notification(Notification.Name.ACAccountStoreDidChange)
-        .map { _ in self.account(in: self.accountStore, for: type)}
-        .subscribe(observer)
+    if let authorizationHeader = Request.authorizationHeader(user: TwitterAccount.key, password: TwitterAccount.secret) {
+      headers[authorizationHeader.key] = authorizationHeader.value
+    }
 
-      self.accountStore.requestAccessToAccounts(with: type, options: nil, completion: { success, error in
-        if success {
-          observer.onNext(self.account(in: self.accountStore, for: type))
-        } else if let error = error {
-          observer.onError(error)
+    return Alamofire.request("https://api.twitter.com/oauth2/token",
+                      method: .post,
+                      parameters: parameters,
+                      encoding: URLEncoding.httpBody,
+                      headers: headers
+      ).responseJSON { response in
+        guard response.error == nil, let data = response.data, let token: Token = try? unbox(data: data) else {
+          completion(nil)
+          return
         }
-      })
-
-      return Disposables.create {
-        notifications.dispose()
+        completion(token.tokenString)
       }
-    })
-      .asDriver(onErrorJustReturn: .unavailable)
   }
 
-  private func account(in accountStore: ACAccountStore, for type: ACAccountType) -> AccountStatus {
-    guard let currentAccount = accountStore.accounts(with: type)?.first as? ACAccount else {
-      return AccountStatus.unavailable
-    }
-    return AccountStatus.authorized(currentAccount)
+  var `default`: Driver<AccountStatus> {
+    return Observable.create({ observer in
+      var request: DataRequest?
+
+      if let storedToken = UserDefaults.standard.string(forKey: "token") {
+        observer.onNext(.authorized(storedToken))
+      } else {
+        request = self.oAuth2Token { token in
+          guard let token = token else {
+            observer.onNext(.unavailable)
+            return
+          }
+          UserDefaults.standard.set(token, forKey: "token")
+          observer.onNext(.authorized(token))
+        }
+      }
+
+      return Disposables.create {
+        request?.cancel()
+      }
+    })
+    .asDriver(onErrorJustReturn: .unavailable)
   }
 }

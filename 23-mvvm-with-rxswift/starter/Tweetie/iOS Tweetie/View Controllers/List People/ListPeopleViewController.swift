@@ -54,6 +54,16 @@ class ListPeopleViewController: UIViewController {
       .disposed(by: bag)
 
     //show message when no account available
+    viewModel.people.asDriver()
+        .map { contents -> Bool in
+            if contents == nil {
+            return false
+            } else {
+            return true
+            }
+        }
+        .drive(messageView.rx.isHidden)
+        .disposed(by: bag)
   }
 }
 

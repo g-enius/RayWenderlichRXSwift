@@ -47,34 +47,22 @@ class ListPeopleViewModelTests: XCTestCase {
   }
 
   func test_whenAccountAvailable_thenFetchesPeople() {
-    let asyncExpect = expectation(description: "fullfill test")
-
     TwitterTestAPI.reset()
 
     let accountSubject = PublishSubject<TwitterAccount.AccountStatus>()
     let viewModel = createViewModel(accountSubject.asDriver(onErrorJustReturn: .unavailable))
-
-    _ = viewModel.people.asObservable()
-      .filter { $0 != nil }
-      .subscribe(onNext: { _ in
-        asyncExpect.fulfill()
-      })
-
     XCTAssertNil(viewModel.people.value, "people is not nil by default")
 
-    accountSubject.onNext(.authorized(TestData.account))
+    let people = viewModel.people.asObservable()
 
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+    DispatchQueue.main.async {
+      accountSubject.onNext(.authorized(AccessToken()))
       TwitterTestAPI.objects.onNext([TestData.personJSON])
-      TwitterTestAPI.objects.onCompleted()
-    })
+    }
 
-    waitForExpectations(timeout: 1.0, handler: { error in
-      XCTAssertNil(error, "error: \(error!.localizedDescription)")
-      XCTAssertNotNil(viewModel.people.value, "people is nil")
-      let person = TestData.personUserObject
-      XCTAssertEqual(viewModel.people.value!.first!.id, person.id)
-      XCTAssertEqual(TwitterTestAPI.lastMethodCall, "members(of:)")
-    })
+    let emitted = try! people.take(2).toBlocking(timeout: 1).toArray()
+    XCTAssertNil(emitted[0])
+    XCTAssertEqual(emitted[1]![0].id, TestData.personUserObject.id)
+    XCTAssertEqual(TwitterTestAPI.lastMethodCall, "members(of:)")
   }
 }

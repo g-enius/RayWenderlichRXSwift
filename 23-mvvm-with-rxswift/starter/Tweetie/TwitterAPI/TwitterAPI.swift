@@ -22,18 +22,18 @@
 
 import Foundation
 
-import Accounts
-import Social
 import RxSwift
 import RxCocoa
+
+import Alamofire
 
 typealias JSONObject = [String: Any]
 typealias ListIdentifier = (username: String, slug: String)
 
 protocol TwitterAPIProtocol {
-  static func timeline(of username: String) -> (ACAccount, TimelineCursor) -> Observable<[JSONObject]>
-  static func timeline(of list: ListIdentifier) -> (ACAccount, TimelineCursor) -> Observable<[JSONObject]>
-  static func members(of list: ListIdentifier) -> (ACAccount) -> Observable<[JSONObject]>
+  static func timeline(of username: String) -> (AccessToken, TimelineCursor) -> Observable<[JSONObject]>
+  static func timeline(of list: ListIdentifier) -> (AccessToken, TimelineCursor) -> Observable<[JSONObject]>
+  static func members(of list: ListIdentifier) -> (AccessToken) -> Observable<[JSONObject]>
 }
 
 struct TwitterAPI: TwitterAPIProtocol {
@@ -53,18 +53,16 @@ struct TwitterAPI: TwitterAPIProtocol {
   // MARK: - API errors
   enum Errors: Error {
     case requestFailed
-    case badResponse
-    case httpError(Int)
   }
 
   // MARK: - API Endpoint Requests
-  static func timeline(of username: String) -> (ACAccount, TimelineCursor) -> Observable<[JSONObject]> {
+  static func timeline(of username: String) -> (AccessToken, TimelineCursor) -> Observable<[JSONObject]> {
     return { account, cursor in
       return request(account, address: TwitterAPI.Address.timeline, parameters: ["screen_name": username, "contributor_details": "false", "count": "100", "include_rts": "true"])
     }
   }
 
-  static func timeline(of list: ListIdentifier) -> (ACAccount, TimelineCursor) -> Observable<[JSONObject]> {
+  static func timeline(of list: ListIdentifier) -> (AccessToken, TimelineCursor) -> Observable<[JSONObject]> {
     return { account, cursor in
       var params = ["owner_screen_name": list.username, "slug": list.slug]
       if cursor != TimelineCursor.none {
@@ -77,7 +75,7 @@ struct TwitterAPI: TwitterAPIProtocol {
     }
   }
 
-  static func members(of list: ListIdentifier) -> (ACAccount) -> Observable<[JSONObject]> {
+  static func members(of list: ListIdentifier) -> (AccessToken) -> Observable<[JSONObject]> {
     return { account in
       let params = ["owner_screen_name": list.username,
                     "slug": list.slug,
@@ -97,35 +95,30 @@ struct TwitterAPI: TwitterAPIProtocol {
   }
 
   // MARK: - generic request to send an SLRequest
-  static private func request<T: Any>(_ account: ACAccount, address: Address, parameters: [String: String] = [:]) -> Observable<T> {
+  static private func request<T: Any>(_ token: AccessToken, address: Address, parameters: [String: String] = [:]) -> Observable<T> {
     return Observable.create { observer in
+      var comps = URLComponents(string: address.url.absoluteString)!
+      comps.queryItems = parameters.map(URLQueryItem.init)
+      let url = try! comps.asURL()
 
-      guard let request = SLRequest(
-        forServiceType: SLServiceTypeTwitter,
-        requestMethod: .GET,
-        url: address.url,
-        parameters: parameters
-        ) else {
+      let request = Alamofire.request(url.absoluteString,
+                                      method: .get,
+                                      parameters: Parameters(),
+                                      encoding: URLEncoding.httpBody,
+                                      headers: ["Authorization": "Bearer \(token)"])
+      request.responseJSON { response in
+        guard response.error == nil, let data = response.data,
+          let json = try? JSONSerialization.jsonObject(with: data, options: []) as? T, let result = json else {
           observer.onError(Errors.requestFailed)
-          return Disposables.create()
-      }
-
-      request.account = account
-
-      request.perform {data, response, error in
-        if let error = error {
-          observer.onError(error)
+          return
         }
-        if let response = response, response.statusCode >= 400 && response.statusCode < 600 {
-          observer.onError(Errors.httpError(response.statusCode))
-        }
-        if let data = data, let json = try? JSONSerialization.jsonObject(with: data, options: []) as? T, let result = json {
-          observer.onNext(result)
-        }
+        observer.onNext(result)
         observer.onCompleted()
       }
 
-      return Disposables.create()
+      return Disposables.create {
+        request.cancel()
+      }
     }
   }
 }

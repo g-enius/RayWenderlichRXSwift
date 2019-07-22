@@ -27,12 +27,12 @@ import Unbox
 class User: Object, Unboxable {
 
   // MARK: - Properties
-  dynamic var id: Int64 = 0
-  dynamic var name = ""
-  dynamic var username = ""
-  dynamic var about = ""
-  dynamic var url = ""
-  dynamic var imageUrl = ""
+  @objc dynamic var id: Int64 = 0
+  @objc dynamic var name = ""
+  @objc dynamic var username = ""
+  @objc dynamic var about = ""
+  @objc dynamic var url = ""
+  @objc dynamic var imageUrl = ""
 
   // MARK: - Meta
   override static func primaryKey() -> String? {

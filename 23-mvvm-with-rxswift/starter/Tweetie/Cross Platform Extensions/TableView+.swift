@@ -36,7 +36,8 @@ import Foundation
 
   extension NSTableView {
     func dequeueCell<T>(ofType type: T.Type) -> T {
-      return make(withIdentifier: String(describing: T.self), owner: self) as! T
+      let id = NSUserInterfaceItemIdentifier(String(describing: T.self))
+      return makeView(withIdentifier: id, owner: self) as! T
     }
   }
 
