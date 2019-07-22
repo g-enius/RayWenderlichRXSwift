@@ -28,9 +28,13 @@ class GifTableViewCell: UITableViewCell {
     
   @IBOutlet weak var gifImageView: UIImageView!
   @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-  
+//  “The SingleAssignmentDisposable() will ensure only one subscription is ever alive at a given time for every single cell so you won’t bleed resources.”
+//
+//  Excerpt From: By Marin Todorov. “RxSwift - Reactive Programming with Swift.” Apple Books.
   var disposable = SingleAssignmentDisposable()
-  
+//  “When a download of a GIF starts, you should make sure it’s been stopped if the user scrolls away and doesn’t wait for the rendering of the image. ”
+//
+//  Excerpt From: By Marin Todorov. “RxSwift - Reactive Programming with Swift.” Apple Books.
   override func prepareForReuse() {
     super.prepareForReuse()
     gifImageView.prepareForReuse()
@@ -41,7 +45,16 @@ class GifTableViewCell: UITableViewCell {
   
   func downloadAndDisplay(gif stringUrl: String) {
     guard let url = URL(string: stringUrl) else { return }
-    _ = URLRequest(url: url)
+    let request = URLRequest(url: url)
+    
+    let s = URLSession.shared.rx.data(request: request)
+            .observeOn(MainScheduler.instance)
+        .subscribe(onNext: { imageData in
+            self.gifImageView.animate(withGIFData: imageData)
+            self.activityIndicator.stopAnimating()
+        })
+    disposable.setDisposable(s)
+    
     activityIndicator.startAnimating()
   }
 }
