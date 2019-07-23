@@ -24,7 +24,15 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-class RxNavigationControllerDelegateProxy: DelegateProxy, DelegateProxyType, UINavigationControllerDelegate {
+class RxNavigationControllerDelegateProxy: DelegateProxy<UINavigationController, UINavigationControllerDelegate>, DelegateProxyType, UINavigationControllerDelegate {
+
+  init(navigationController: UINavigationController) {
+    super.init(parentObject: navigationController, delegateProxy: RxNavigationControllerDelegateProxy.self)
+  }
+
+  static func registerKnownImplementations() {
+    self.register { RxNavigationControllerDelegateProxy(navigationController: $0) }
+  }
 
   static func currentDelegateFor(_ object: AnyObject) -> AnyObject? {
     guard let navigationController = object as? UINavigationController else {
@@ -48,12 +56,3 @@ class RxNavigationControllerDelegateProxy: DelegateProxy, DelegateProxyType, UIN
   }
 }
 
-extension Reactive where Base: UINavigationController {
-  /**
-     Reactive wrapper for `delegate`.
-     For more information take a look at `DelegateProxyType` protocol documentation.
-     */
-  public var delegate: DelegateProxy {
-    return RxNavigationControllerDelegateProxy.proxyForObject(base)
-  }
-}

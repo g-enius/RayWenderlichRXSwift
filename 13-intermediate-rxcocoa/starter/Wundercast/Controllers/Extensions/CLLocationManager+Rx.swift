@@ -32,10 +32,10 @@ extension CLLocationManager: HasDelegate {
 class RxCLLocationManagerDelegateProxy: DelegateProxy<CLLocationManager, CLLocationManagerDelegate>,
 CLLocationManagerDelegate, DelegateProxyType {
     
-    public weak private(set) var locationManager: CLLocationManager?
+//    public weak private(set) var locationManager: CLLocationManager?
     
     public init(locationManager: ParentObject) {
-        self.locationManager = locationManager
+//        self.locationManager = locationManager
         super.init(parentObject: locationManager, delegateProxy: RxCLLocationManagerDelegateProxy.self)
     }
     
