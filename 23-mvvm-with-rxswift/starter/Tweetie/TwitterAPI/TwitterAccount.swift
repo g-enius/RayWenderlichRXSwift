@@ -41,8 +41,8 @@ struct TwitterAccount {
       ~> You need to provide your Twitter APP Key and Secret, consult Chapter 23 of the RxSwift book for instructions how to register your own app\n
       -----------------------------------\n\n
     """)
-    self.key = key
-    self.secret = secret
+    self.key = "idomhCf9PAwvzfco8AXXBslN3"
+    self.secret = "8IauQpiUusmrFYRG6tQsDaXy729DXJ29YEgfQvm03Y3oSOkzTH"
   }
 
   private struct Token: Unboxable {

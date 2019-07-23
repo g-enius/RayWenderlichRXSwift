@@ -28,8 +28,8 @@ import RxRealm
 import RxCocoa
 
 class ListTimelineViewModel {
-  private let bag = DisposeBag()
-  private let fetcher: TimelineFetcher
+    private let bag = DisposeBag()
+    private let fetcher: TimelineFetcher
     let list: ListIdentifier
     let account: Driver<TwitterAccount.AccountStatus>
 
