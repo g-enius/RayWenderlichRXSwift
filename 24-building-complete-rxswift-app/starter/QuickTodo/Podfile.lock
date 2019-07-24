@@ -1,34 +1,37 @@
 PODS:
-  - Action (3.11.0):
-    - RxCocoa (~> 4.0)
-    - RxSwift (~> 4.0)
-  - Differentiator (3.1.0)
-  - "NSObject+Rx (4.4.1)":
-    - RxSwift (~> 4.3)
-  - Realm (3.14.2):
-    - Realm/Headers (= 3.14.2)
-  - Realm/Headers (3.14.2)
-  - RealmSwift (3.14.2):
-    - Realm (= 3.14.2)
-  - RxCocoa (4.5.0):
-    - RxSwift (>= 4.4.2, ~> 4.4)
-  - RxDataSources (3.1.0):
-    - Differentiator (~> 3.0)
-    - RxCocoa (~> 4.0)
-    - RxSwift (~> 4.0)
-  - RxRealm (0.7.6):
-    - RealmSwift (~> 3.0)
-    - RxSwift (~> 4.0)
-  - RxSwift (4.5.0)
+  - Action (4.0.0):
+    - RxCocoa (~> 5.0)
+    - RxSwift (~> 5.0)
+  - Differentiator (4.0.1)
+  - "NSObject+Rx (5.0.0)":
+    - RxSwift (~> 5.0)
+  - Realm (3.17.1):
+    - Realm/Headers (= 3.17.1)
+  - Realm/Headers (3.17.1)
+  - RealmSwift (3.17.1):
+    - Realm (= 3.17.1)
+  - RxCocoa (5.0.0):
+    - RxRelay (~> 5)
+    - RxSwift (~> 5)
+  - RxDataSources (4.0.1):
+    - Differentiator (~> 4.0)
+    - RxCocoa (~> 5.0)
+    - RxSwift (~> 5.0)
+  - RxRealm (1.0.0):
+    - RealmSwift (~> 3.14)
+    - RxSwift (~> 5.0)
+  - RxRelay (5.0.0):
+    - RxSwift (~> 5)
+  - RxSwift (5.0.0)
 
 DEPENDENCIES:
-  - Action (~> 3.4)
-  - "NSObject+Rx (~> 4.1)"
-  - RealmSwift (~> 3.0)
-  - RxCocoa (~> 4.0)
-  - RxDataSources (~> 3.0)
-  - RxRealm (~> 0.7)
-  - RxSwift (~> 4.0)
+  - Action
+  - "NSObject+Rx"
+  - RealmSwift
+  - RxCocoa
+  - RxDataSources
+  - RxRealm
+  - RxSwift
 
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
@@ -40,19 +43,21 @@ SPEC REPOS:
     - RxCocoa
     - RxDataSources
     - RxRealm
+    - RxRelay
     - RxSwift
 
 SPEC CHECKSUMS:
-  Action: 689181e4c3f6566844178d8a7da6fef39a9597fc
-  Differentiator: be49ca3408f0ecfc761e4c7763d20c62be01b9ad
-  "NSObject+Rx": 9884a92f19b610795c431e10b4e601913b59c9e9
-  Realm: 179c6706e3a49dbfe112e572fd3c03d3169bea35
-  RealmSwift: 1797f272fb51c555b764fada32e82159a2c65247
-  RxCocoa: cbf70265dc65a981d4ac982e513c10cf23df24a0
-  RxDataSources: a843bad90c29817f5923ec8163f4af2de084ceb3
-  RxRealm: 5379eddd74f8d617ca7681d1f8d144af25b432b0
-  RxSwift: f172070dfd1a93d70a9ab97a5a01166206e1c575
+  Action: 0d14986aad0f1330aa27ce65d0cdeaacbb63d91c
+  Differentiator: 886080237d9f87f322641dedbc5be257061b0602
+  "NSObject+Rx": 6151a97d171f7187c4183746acc42d9451952a7b
+  Realm: c204f1a890f07dea43b14132a6aad118c054b8f2
+  RealmSwift: 4d3c9233544b9cd08a8913e0872b9038eb99b054
+  RxCocoa: fcf32050ac00d801f34a7f71d5e8e7f23026dcd8
+  RxDataSources: efee07fa4de48477eca0a4611e6d11e2da9c1114
+  RxRealm: 1e81dcfca1fb50c3e9b3e1f8102bc875c5156a2e
+  RxRelay: 4f7409406a51a55cd88483f21ed898c234d60f18
+  RxSwift: 8b0671caa829a763bbce7271095859121cbd895f
 
-PODFILE CHECKSUM: 9019f8580d36323a8c6a60e9dbbaea9f0896804a
+PODFILE CHECKSUM: 0fb221c25b07ef35c480d7d71f0d676ae183ab33
 
-COCOAPODS: 1.7.2
+COCOAPODS: 1.7.4
