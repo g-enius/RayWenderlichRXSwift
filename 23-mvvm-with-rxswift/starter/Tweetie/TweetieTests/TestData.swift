@@ -47,7 +47,7 @@ class TestData {
       "name": "Name",
       "profile_image_url_https": "Url"
     ],
-    "created": "2011-11-11T20:00:00GMT"
+    "created_at": "Wed Jul 24 09:39:41 +0000 2019"
   ]
 
   static var tweetsJSON: [[String: Any]] {
