@@ -31,6 +31,7 @@ protocol BindableType {
   func bindViewModel()
 }
 
+//only add this func extension to UIViewController which adopts BindableType protocol
 extension BindableType where Self: UIViewController {
   mutating func bindViewModel(to model: Self.ViewModelType) {
     viewModel = model
