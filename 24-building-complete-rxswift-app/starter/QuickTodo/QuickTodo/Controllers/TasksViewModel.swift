@@ -84,8 +84,10 @@ struct TasksViewModel {
                                                 updateAction: self.onUpdateTitle(task: task),
                                                 cancelAction: self.onDelete(task: task))
           return self.sceneCoordinator
-            .transition(to: Scene.editTask(editViewModel), type: .modal)
-            .asObservable().map { _ in }
+            .transition(to: Scene.editTask(editViewModel), type: .push)
+            .asObservable()
+            .debug("viewModel")
+            .map { _ in }
       }
     }
   }
@@ -98,7 +100,7 @@ struct TasksViewModel {
         updateAction: this.onUpdateTitle(task: task)
       )
       return this.sceneCoordinator
-        .transition(to: Scene.editTask(editViewModel), type: .modal)
+        .transition(to: Scene.editTask(editViewModel), type: .push)
         .asObservable()
     }
   }(self)

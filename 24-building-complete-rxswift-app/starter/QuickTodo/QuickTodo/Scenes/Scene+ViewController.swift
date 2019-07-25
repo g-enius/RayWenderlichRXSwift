@@ -33,9 +33,9 @@ extension Scene {
       return nc
 
     case .editTask(let viewModel):
-      let nc = storyboard.instantiateViewController(withIdentifier: "EditTask") as! UINavigationController
-      var vc = nc.viewControllers.first as! EditTaskViewController
-      vc.bindViewModel(to: viewModel)
+        var nc = storyboard.instantiateViewController(withIdentifier: "EditTask") as! EditTaskViewController
+//      var vc = nc.viewControllers.first as! EditTaskViewController
+      nc.bindViewModel(to: viewModel)
       return nc
     }
   }
