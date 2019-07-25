@@ -23,7 +23,6 @@
 		D8D4BCFC41706D2948B976E9 /* TaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BA6C83C44202E85BE61D /* TaskService.swift */; };
 		D8D4BE38CFBD47278990836B /* TaskServiceType.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BFBF5D6D8CA757EC782E /* TaskServiceType.swift */; };
 		D8D4BF01609E6A8B671DC82B /* SceneTransitionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4B8D1420382C7FC118E84 /* SceneTransitionType.swift */; };
-		D8D4BF8A5D0B3EA190CF4C58 /* UINavigationController+Rx.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4B718D5F7A94BC9BB06BB /* UINavigationController+Rx.swift */; };
 		D8D4BFAE409AAC26A804D7E6 /* SceneCoordinatorType.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BF2D32577F25C8EDFFC1 /* SceneCoordinatorType.swift */; };
 		D8D4BFB6F8704E6619D678C9 /* EditTaskViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4B669B9E5D5F0A890C14A /* EditTaskViewModel.swift */; };
 		D8D4BFC445A53540D28CDB55 /* SceneCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8D4BD2FD3ECDBCF00EC50D1 /* SceneCoordinator.swift */; };
@@ -45,7 +44,6 @@
 		D8D4B5E9DE757713868B0E95 /* TasksViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TasksViewController.swift; sourceTree = "<group>"; };
 		D8D4B669B9E5D5F0A890C14A /* EditTaskViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditTaskViewModel.swift; sourceTree = "<group>"; };
 		D8D4B6C0547B35F0B43F7717 /* TaskTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaskTableViewCell.swift; sourceTree = "<group>"; };
-		D8D4B718D5F7A94BC9BB06BB /* UINavigationController+Rx.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UINavigationController+Rx.swift"; sourceTree = "<group>"; };
 		D8D4B8D1420382C7FC118E84 /* SceneTransitionType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneTransitionType.swift; sourceTree = "<group>"; };
 		D8D4B9842A4352B148BF885E /* TasksViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TasksViewModel.swift; sourceTree = "<group>"; };
 		D8D4BA32D5567F5E35669414 /* Scene+ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Scene+ViewController.swift"; sourceTree = "<group>"; };
@@ -92,7 +90,6 @@
 				3D932B021E4D245600E4BC3D /* AppDelegate.swift */,
 				D8D4B1782111ABB7322736CA /* Scenes */,
 				D8D4BF978E3DDD6A8036855A /* Services */,
-				D8D4BFEEE821F5F21651C5C5 /* Extensions */,
 				D8D4BF63C0585FD74DFD612D /* Model */,
 				D8D4B9F8F6973A366A9A7539 /* Controllers */,
 				D8D4B5CEA10908BDD31C9A47 /* Cells */,
@@ -160,14 +157,6 @@
 				D8D4BA6C83C44202E85BE61D /* TaskService.swift */,
 			);
 			path = Services;
-			sourceTree = "<group>";
-		};
-		D8D4BFEEE821F5F21651C5C5 /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-				D8D4B718D5F7A94BC9BB06BB /* UINavigationController+Rx.swift */,
-			);
-			path = Extensions;
 			sourceTree = "<group>";
 		};
 		DBAAFBAC61F453E312215DF3 /* Frameworks */ = {
@@ -324,7 +313,6 @@
 				D8D4B084216A9B2C450E606F /* Scene.swift in Sources */,
 				D8D4BFAE409AAC26A804D7E6 /* SceneCoordinatorType.swift in Sources */,
 				D8D4BFC445A53540D28CDB55 /* SceneCoordinator.swift in Sources */,
-				D8D4BF8A5D0B3EA190CF4C58 /* UINavigationController+Rx.swift in Sources */,
 				D8D4BA1FDBE501C5676863C6 /* Scene+ViewController.swift in Sources */,
 				D8D4BF01609E6A8B671DC82B /* SceneTransitionType.swift in Sources */,
 			);

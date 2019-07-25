@@ -32,7 +32,9 @@ protocol SceneCoordinatorType {
   @discardableResult
   func pop(animated: Bool) -> Completable
 }
-
+//“You can also develop a test implementation that fakes transitions.”
+//
+//Excerpt From: By Marin Todorov. “RxSwift - Reactive Programming with Swift.” Apple Books. 
 extension SceneCoordinatorType {
   @discardableResult
   func pop() -> Completable {
