@@ -24,7 +24,6 @@ import UIKit
 import RxSwift
 import RxDataSources
 import Action
-import NSObject_Rx
 
 class TasksViewController: UIViewController, BindableType {
   
@@ -35,6 +34,8 @@ class TasksViewController: UIViewController, BindableType {
   var viewModel: TasksViewModel!
   var dataSource: RxTableViewSectionedAnimatedDataSource<TaskSection>!
 
+  var disposeBag = DisposeBag()
+    
   override func viewDidLoad() {
     super.viewDidLoad()
     
@@ -49,7 +50,7 @@ class TasksViewController: UIViewController, BindableType {
   func bindViewModel() {
     viewModel.sectionedItems
       .bind(to: tableView.rx.items(dataSource: dataSource))
-      .disposed(by: self.rx.disposeBag)
+      .disposed(by: disposeBag)
 
     newTaskButton.rx.action = viewModel.onCreateTask()
 
@@ -61,7 +62,7 @@ class TasksViewController: UIViewController, BindableType {
         try! self.dataSource.model(at: indexPath) as! TaskItem
       }
       .subscribe(viewModel.editAction.inputs)
-      .disposed(by: self.rx.disposeBag)
+      .disposed(by: disposeBag)
 
     //challenge 1
     tableView.rx.itemDeleted
@@ -69,7 +70,7 @@ class TasksViewController: UIViewController, BindableType {
         try! self.tableView.rx.model(at: indexPath)
       }
       .subscribe(viewModel.deleteAction.inputs)
-      .disposed(by: self.rx.disposeBag)
+      .disposed(by: disposeBag)
 
     //challenge 2
     viewModel.statistics
@@ -77,7 +78,7 @@ class TasksViewController: UIViewController, BindableType {
         let total = stats.todo + stats.done
         self?.statisticsLabel.text = "\(total) tasks, \(stats.todo) due."
       })
-      .disposed(by: self.rx.disposeBag)
+      .disposed(by: disposeBag)
 
   }
 

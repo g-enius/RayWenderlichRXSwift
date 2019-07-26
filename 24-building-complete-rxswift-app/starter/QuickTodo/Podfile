@@ -9,7 +9,7 @@ target 'QuickTodo' do
 
   # Community projects
   pod 'Action'
-  pod 'NSObject+Rx'
+  # pod 'NSObject+Rx'
   
   # Realm database
   pod 'RxRealm'
