@@ -79,11 +79,18 @@ struct TasksViewModel {
       return self.taskService
         .createTask(title: "")
         .flatMap { task -> Observable<Void> in
+        //1) First View Model instantiates the Second view Model
           let editViewModel = EditTaskViewModel(task: task,
                                                 coordinator: self.sceneCoordinator,
                                                 updateAction: self.onUpdateTitle(task: task),
                                                 cancelAction: self.onDelete(task: task))
-          return self.sceneCoordinator
+        //2) calls for transition
+        //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
+        // <inside Scene Cordinator>
+        //3) Scene Coordinator instantiates the Second View Controller
+        //4) Scene Coordinator binds second VC and VM together
+        //5) Scene Coordinator presents second VC
+            return self.sceneCoordinator
             .transition(to: Scene.editTask(editViewModel), type: .push)
             .asObservable()
             .debug("viewModel")

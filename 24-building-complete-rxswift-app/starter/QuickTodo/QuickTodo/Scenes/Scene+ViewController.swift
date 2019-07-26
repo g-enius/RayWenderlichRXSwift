@@ -35,6 +35,7 @@ extension Scene {
     case .editTask(let viewModel):
         var nc = storyboard.instantiateViewController(withIdentifier: "EditTask") as! EditTaskViewController
 //      var vc = nc.viewControllers.first as! EditTaskViewController
+    //4) Scene Coordinator binds second VC and VM together
       nc.bindViewModel(to: viewModel)
       return nc
     }

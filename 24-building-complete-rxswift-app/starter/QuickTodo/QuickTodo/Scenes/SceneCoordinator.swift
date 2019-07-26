@@ -45,6 +45,7 @@ class SceneCoordinator: SceneCoordinatorType {
   @discardableResult
   func transition(to scene: Scene, type: SceneTransitionType) -> Completable {
     let subject = PublishSubject<Void>()
+    //3) Scene Coordinator instantiates the Second View Controller
     let viewController = scene.viewController()
     switch type {
       case .root:
@@ -63,6 +64,8 @@ class SceneCoordinator: SceneCoordinatorType {
             .debug("coordinator")
           .map { _ in }
           .bind(to: subject)
+    //5) Scene Coordinator pushs/presents second VC
+
         navigationController.pushViewController(viewController, animated: true)
         currentViewController = SceneCoordinator.actualViewController(for: viewController)
 

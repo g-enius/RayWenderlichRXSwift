@@ -30,21 +30,25 @@ struct EditTaskViewModel {
   let onUpdate: Action<String, Void>
   let onCancel: CocoaAction!
   let disposeBag = DisposeBag()
-
+    
   init(task: TaskItem, coordinator: SceneCoordinatorType, updateAction: Action<String, Void>, cancelAction: CocoaAction? = nil) {
     itemTitle = task.title
     onUpdate = updateAction
     onCancel = CocoaAction {
       if let cancelAction = cancelAction {
-        cancelAction.execute(())
+        cancelAction.execute()
       }
+    //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
       return coordinator.pop()
         .asObservable().map { _ in }
     }
 
-    onUpdate.executionObservables
+    onUpdate
+        .executionObservables// return after action execution
+        .debug("executionObservables")
       .take(1)
       .subscribe(onNext: { _ in
+        //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
         coordinator.pop()
       })
       .disposed(by: disposeBag)

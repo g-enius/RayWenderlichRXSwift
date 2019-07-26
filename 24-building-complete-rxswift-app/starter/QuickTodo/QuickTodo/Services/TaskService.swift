@@ -63,9 +63,9 @@ struct TaskService: TaskServiceType {
         task.uid = (realm.objects(TaskItem.self).max(ofProperty: "uid") ?? 0) + 1
         realm.add(task)
       }
-      return .just(task)
+        return .just(task) // only can compile in this way due to the context of return Observable type
     }
-    return result ?? .error(TaskServiceError.creationFailed)
+    return result ?? Observable.error(TaskServiceError.creationFailed)
   }
 
   @discardableResult
