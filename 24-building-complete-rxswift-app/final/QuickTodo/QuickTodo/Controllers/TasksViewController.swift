@@ -24,54 +24,81 @@ import UIKit
 import RxSwift
 import RxDataSources
 import Action
-import NSObject_Rx
 
 class TasksViewController: UIViewController, BindableType {
   
   @IBOutlet var tableView: UITableView!
   @IBOutlet var statisticsLabel: UILabel!
   @IBOutlet var newTaskButton: UIBarButtonItem!
-  
-  var viewModel: TasksViewModel!
-  let dataSource = RxTableViewSectionedAnimatedDataSource<TaskSection>()
+    //    That ! in the protocol is due to “TaskViewControler” and “EditTaskViewController” also define the viewModel as a var !. That’s a “have-to-do” as there are no inits there.
+    var viewModel: TasksViewModel!
+  var dataSource: RxTableViewSectionedAnimatedDataSource<TaskSection>!
 
+  var disposeBag = DisposeBag()
+    
   override func viewDidLoad() {
     super.viewDidLoad()
     
-    tableView.rowHeight = UITableViewAutomaticDimension
+    tableView.rowHeight = UITableView.automaticDimension
     tableView.estimatedRowHeight = 60
 
     configureDataSource()
+
+    setEditing(true, animated: false)
   }
   
   func bindViewModel() {
     viewModel.sectionedItems
       .bind(to: tableView.rx.items(dataSource: dataSource))
-      .disposed(by: self.rx_disposeBag)
+      .disposed(by: disposeBag)
 
     newTaskButton.rx.action = viewModel.onCreateTask()
 
     tableView.rx.itemSelected
+      .do(onNext: { [unowned self] indexPath in
+        self.tableView.deselectRow(at: indexPath, animated: false)
+      })
       .map { [unowned self] indexPath in
         try! self.dataSource.model(at: indexPath) as! TaskItem
       }
       .subscribe(viewModel.editAction.inputs)
-      .disposed(by: rx_disposeBag)
+      .disposed(by: disposeBag)
+
+    //challenge 1
+    tableView.rx.itemDeleted
+      .map { [unowned self] indexPath in
+        try! self.tableView.rx.model(at: indexPath)
+      }
+      .subscribe(viewModel.deleteAction.inputs)
+      .disposed(by: disposeBag)
+
+    //challenge 2
+    viewModel.statistics
+      .subscribe(onNext: { [weak self] stats in
+        let total = stats.todo + stats.done
+        self?.statisticsLabel.text = "\(total) tasks, \(stats.todo) due."
+      })
+      .disposed(by: disposeBag)
+
   }
 
   fileprivate func configureDataSource() {
-    dataSource.titleForHeaderInSection = { dataSource, index in
-      dataSource.sectionModels[index].model
-    }
+    dataSource = RxTableViewSectionedAnimatedDataSource<TaskSection>(
+      configureCell: {
+        [weak self] dataSource, tableView, indexPath, item in
+        let cell = tableView.dequeueReusableCell(withIdentifier: "TaskItemCell", for: indexPath) as! TaskItemTableViewCell
+        if let strongSelf = self {
+          cell.configure(with: item, action: strongSelf.viewModel.onToggle(task: item))
+        }
+        return cell
+      },
 
-    dataSource.configureCell = {
-      [weak self] dataSource, tableView, indexPath, item in
-      let cell = tableView.dequeueReusableCell(withIdentifier: "TaskItemCell", for: indexPath) as! TaskItemTableViewCell
-      if let strongSelf = self {
-        cell.configure(with: item, action: strongSelf.viewModel.onToggle(task: item))
-      }
-      return cell
-    }
+      titleForHeaderInSection: { dataSource, index in
+        dataSource.sectionModels[index].model
+      },
+
+      canEditRowAtIndexPath: { _,_ in true }
+    )
   }
 
 }

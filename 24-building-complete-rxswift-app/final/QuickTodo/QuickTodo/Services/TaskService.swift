@@ -63,9 +63,9 @@ struct TaskService: TaskServiceType {
         task.uid = (realm.objects(TaskItem.self).max(ofProperty: "uid") ?? 0) + 1
         realm.add(task)
       }
-      return .just(task)
+        return .just(task) // only can compile in this way due to the context of return Observable type
     }
-    return result ?? .error(TaskServiceError.creationFailed)
+    return result ?? Observable.error(TaskServiceError.creationFailed)
   }
 
   @discardableResult
@@ -107,9 +107,34 @@ struct TaskService: TaskServiceType {
 
   func tasks() -> Observable<Results<TaskItem>> {
     let result = withRealm("getting tasks") { realm -> Observable<Results<TaskItem>> in
-      let realm = try Realm()
       let tasks = realm.objects(TaskItem.self)
       return Observable.collection(from: tasks)
+    }
+    return result ?? .empty()
+  }
+
+  //challenge 2
+  func numberOfTasks() -> Observable<Int> {
+    let result = withRealm("number of tasks") { realm -> Observable<Int> in
+      let tasks = realm.objects(TaskItem.self)
+      return Observable.collection(from: tasks)
+        .map { $0.count }
+    }
+    return result ?? .empty()
+  }
+
+  //challenge2
+  func statistics() -> Observable<TaskStatistics> {
+    let result = withRealm("getting statistics") { realm -> Observable<TaskStatistics> in
+      let tasks = realm.objects(TaskItem.self)
+      let todoTasks = tasks.filter("checked != nil")
+      return .combineLatest(
+        Observable.collection(from: tasks)
+          .map { $0.count },
+        Observable.collection(from: todoTasks)
+          .map { $0.count }) { all, done in
+        (todo: all - done, done: done)
+      }
     }
     return result ?? .empty()
   }

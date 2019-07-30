@@ -38,85 +38,86 @@ struct TasksViewModel {
     self.sceneCoordinator = coordinator
   }
 
-  func onToggle(task: TaskItem) -> CocoaAction {
-    return CocoaAction {
-      return self.taskService.toggle(task: task).map { _ in }
+    func onToggle(task: TaskItem) -> CocoaAction {
+        return CocoaAction {
+            return self.taskService.toggle(task: task)
+                .map{_ in }
+        }
     }
-  }
-
-  func onDelete(task: TaskItem) -> CocoaAction {
-    return CocoaAction {
-      return self.taskService.delete(task: task)
+    
+    func onDelete(task: TaskItem) -> CocoaAction {
+        return CocoaAction {
+            return self.taskService.delete(task: task)
+        }
     }
-  }
-
-  func onUpdateTitle(task: TaskItem) -> Action<String, Void> {
-    return Action { newTitle in
-      return self.taskService.update(task: task, title: newTitle).map { _ in }
+    
+    func onUpdateTitle(task: TaskItem) -> Action<String, Void> {
+        return Action { newTitle in
+            return self.taskService
+                .update(task: task,
+                        title: newTitle)
+                .map{_ in }
+        }
     }
-  }
-
-  var sectionedItems: Observable<[TaskSection]> {
-    return self.taskService.tasks()
-      .map { results in
-        let dueTasks = results
-          .filter("checked == nil")
-          .sorted(byKeyPath: "added", ascending: false)
-
-        let doneTasks = results
-          .filter("checked != nil")
-          .sorted(byKeyPath: "checked", ascending: false)
-
-        return [
-          TaskSection(model: "Due Tasks", items: dueTasks.toArray()),
-          TaskSection(model: "Done Tasks", items: doneTasks.toArray())
-        ]
+    
+    //read-only computed variable
+    var sectionedItems: Observable<[TaskSection]> {
+        return self.taskService.tasks()
+            .map{ results -> [TaskSection] in
+                let dueTasks = results
+                .filter("checked == nil")
+                .sorted(byKeyPath: "added", ascending: false)
+                
+                let doneTask = results
+                .filter("checked != nil")
+                .sorted(byKeyPath: "checked", ascending: false)
+                
+                return [
+                    TaskSection(model: "Due Tasks", items: dueTasks.toArray()),
+                    TaskSection(model: "Done Tasks", items: doneTask.toArray())
+                ]
+            }
     }
-  }
-
-  func onCreateTask() -> CocoaAction {
-    return CocoaAction { _ in
-      return self.taskService
-        .createTask(title: "")
-        .flatMap { task -> Observable<Void> in
-        //1) First View Model instantiates the Second view Model
-          let editViewModel = EditTaskViewModel(task: task,
-                                                coordinator: self.sceneCoordinator,
-                                                updateAction: self.onUpdateTitle(task: task),
-                                                cancelAction: self.onDelete(task: task))
-        //2) calls for transition
-        //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
-        // <inside Scene Cordinator>
-        //3) Scene Coordinator instantiates the Second View Controller
-        //4) Scene Coordinator binds second VC and VM together
-        //5) Scene Coordinator presents second VC
-            return self.sceneCoordinator
-            .transition(to: Scene.editTask(editViewModel), type: .push)
-            .asObservable()
-            .debug("viewModel")
-            .map { _ in }
-      }
+    
+    func onCreateTask() -> CocoaAction {
+        return CocoaAction {
+            return self.taskService
+            .createTask(title: "")
+                .flatMap{ task -> Observable<Void> in
+//1) First View Model instantiates the Second view Model
+                    let editTaskViewModel = EditTaskViewModel(task: task,
+                                                              coordinator: self.sceneCoordinator,
+                                                              updateAction: self.onUpdateTitle(task: task),
+                                                              cancelAction: self.onDelete(task: task))
+//2) calls for transition
+//push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
+// <inside Scene Cordinator>
+//3) Scene Coordinator instantiates the Second View Controller
+//4) Scene Coordinator binds second VC and VM together
+//5) Scene Coordinator presents second VC
+                    return self.sceneCoordinator
+                    .transition(to: Scene.editTask(editTaskViewModel), type: .push)
+                    .asObservable()
+                        .map{ _ in }
+                }
+        }
     }
-  }
-
-  lazy var editAction: Action<TaskItem, Swift.Never> = { this in
-    return Action { task in
-      let editViewModel = EditTaskViewModel(
-        task: task,
-        coordinator: this.sceneCoordinator,
-        updateAction: this.onUpdateTitle(task: task)
-      )
-      return this.sceneCoordinator
-        .transition(to: Scene.editTask(editViewModel), type: .push)
-        .asObservable()
-    }
-  }(self)
-
-  //challenge 1
-  lazy var deleteAction: Action<TaskItem, Void> = { (service: TaskServiceType) in
-    return Action { item in
-      return service.delete(task: item)
-    }
-  }(self.taskService)
-
+    
+    //lazy read & write computed variable
+    lazy var editAdction: Action<TaskItem, Never> = { this in
+        return Action { task -> Observable<Never> in
+            let editViewModel = EditTaskViewModel(task: task,
+                                                  coordinator: this.sceneCoordinator,
+                                                  updateAction: this.onUpdateTitle(task:task))
+            return this.sceneCoordinator
+                .transition(to: Scene.editTask(editViewModel), type: .push)
+                .asObservable()
+        }
+    }(self)
+    
+    lazy var deleteAction: Action<TaskItem, Void> = { (service: TaskServiceType) in
+        return Action { task in
+            return service.delete(task: task)
+        }
+    }(self.taskService)
 }

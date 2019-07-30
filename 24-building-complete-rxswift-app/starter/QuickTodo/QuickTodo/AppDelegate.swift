@@ -27,16 +27,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-    let service = TaskService()
-    let sceneCoordinator = SceneCoordinator(window: window!)
-
-    let tasksViewModel = TasksViewModel(taskService: service, coordinator: sceneCoordinator)
-    let firstScene = Scene.tasks(tasksViewModel)
+        let service = TaskService()
+        let sceneCoordinator = SceneCoordinator(window: window!)
+        
+        let taskViewModel = TasksViewModel(taskService: service, coordinator: sceneCoordinator)
+        let firstScene = Scene.tasks(taskViewModel)
+        
+        sceneCoordinator.transition(to: firstScene, type: .root)
+        
 //        “The cool thing with this technique is that you can use a different startup scene if needed; for example, a tutorial that runs the first time the user opens your application.”
 //
 //        Excerpt From: By Marin Todorov. “RxSwift - Reactive Programming with Swift.” Apple Books.
 //
-    sceneCoordinator.transition(to: firstScene, type: .root)
 
     return true
   }

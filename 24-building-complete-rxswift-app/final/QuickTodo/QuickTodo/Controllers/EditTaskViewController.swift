@@ -24,7 +24,6 @@ import UIKit
 import RxSwift
 import RxCocoa
 import Action
-import NSObject_Rx
 
 class EditTaskViewController: UIViewController, BindableType {
 
@@ -34,6 +33,8 @@ class EditTaskViewController: UIViewController, BindableType {
 
   var viewModel: EditTaskViewModel!
 
+  var disposedBag = DisposeBag()
+
   func bindViewModel() {
     titleView.text = viewModel.itemTitle
 
@@ -42,7 +43,7 @@ class EditTaskViewController: UIViewController, BindableType {
     okButton.rx.tap
       .withLatestFrom(titleView.rx.text.orEmpty)
       .subscribe(viewModel.onUpdate.inputs)
-      .disposed(by: rx_disposeBag)
+      .disposed(by: disposedBag)
   }
 
   override func viewDidAppear(_ animated: Bool) {

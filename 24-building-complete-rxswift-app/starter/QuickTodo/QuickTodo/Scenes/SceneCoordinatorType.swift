@@ -23,6 +23,7 @@
 import UIKit
 import RxSwift
 
+//The purpose of this protocol is for testing purpose. Tests can instantiate a testSceneCoordinator to do mocks
 protocol SceneCoordinatorType {
   /// transition to another scene
   @discardableResult

@@ -31,6 +31,8 @@ struct TasksViewModel {
   let sceneCoordinator: SceneCoordinatorType
   let taskService: TaskServiceType
 
+  lazy var statistics: Observable<TaskStatistics> = self.taskService.statistics()
+
   init(taskService: TaskServiceType, coordinator: SceneCoordinatorType) {
     self.taskService = taskService
     self.sceneCoordinator = coordinator
@@ -54,6 +56,7 @@ struct TasksViewModel {
     }
   }
 
+//read-only computed variable
   var sectionedItems: Observable<[TaskSection]> {
     return self.taskService.tasks()
       .map { results in
@@ -77,23 +80,45 @@ struct TasksViewModel {
       return self.taskService
         .createTask(title: "")
         .flatMap { task -> Observable<Void> in
+        //1) First View Model instantiates the Second view Model
           let editViewModel = EditTaskViewModel(task: task,
                                                 coordinator: self.sceneCoordinator,
                                                 updateAction: self.onUpdateTitle(task: task),
                                                 cancelAction: self.onDelete(task: task))
-          return self.sceneCoordinator.transition(to: Scene.editTask(editViewModel), type: .modal)
+        //2) calls for transition
+        //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
+        // <inside Scene Cordinator>
+        //3) Scene Coordinator instantiates the Second View Controller
+        //4) Scene Coordinator binds second VC and VM together
+        //5) Scene Coordinator presents second VC
+            return self.sceneCoordinator
+            .transition(to: Scene.editTask(editViewModel), type: .push)
+            .asObservable()
+            .debug("viewModel")
+            .map { _ in }
       }
     }
   }
 
-  lazy var editAction: Action<TaskItem, Void> = { this in
+    //read & write computed variable
+  lazy var editAction: Action<TaskItem, Swift.Never> = { this in
     return Action { task in
       let editViewModel = EditTaskViewModel(
         task: task,
         coordinator: this.sceneCoordinator,
         updateAction: this.onUpdateTitle(task: task)
       )
-      return this.sceneCoordinator.transition(to: Scene.editTask(editViewModel), type: .modal)
+      return this.sceneCoordinator
+        .transition(to: Scene.editTask(editViewModel), type: .push)
+        .asObservable()
     }
   }(self)
+
+  //challenge 1
+  lazy var deleteAction: Action<TaskItem, Void> = { (service: TaskServiceType) in
+    return Action { item in
+      return service.delete(task: item)
+    }
+  }(self.taskService)
+
 }

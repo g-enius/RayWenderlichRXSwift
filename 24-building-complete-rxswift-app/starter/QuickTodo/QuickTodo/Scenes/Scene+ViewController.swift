@@ -23,21 +23,21 @@
 import UIKit
 
 extension Scene {
-  func viewController() -> UIViewController {
+  func instantiateViewController() -> UIViewController {
     let storyboard = UIStoryboard(name: "Main", bundle: nil)
     switch self {
     case .tasks(let viewModel):
-      let nc = storyboard.instantiateViewController(withIdentifier: "Tasks") as! UINavigationController
-      var vc = nc.viewControllers.first as! TasksViewController
-      vc.bindViewModel(to: viewModel)
-      return nc
-
+        let nc = storyboard.instantiateViewController(withIdentifier: "Tasks") as! UINavigationController
+        var vc = nc.viewControllers.first as! TasksViewController
+//        As (self.)viewModel is mutated in bindViewModel(to:), so self (a ViewController) must be a var.
+        vc.bindViewModel(to: viewModel)
+        return nc
+        
     case .editTask(let viewModel):
-        var nc = storyboard.instantiateViewController(withIdentifier: "EditTask") as! EditTaskViewController
-//      var vc = nc.viewControllers.first as! EditTaskViewController
-    //4) Scene Coordinator binds second VC and VM together
-      nc.bindViewModel(to: viewModel)
-      return nc
+        var vc = storyboard.instantiateViewController(withIdentifier: "EditTask") as! EditTaskViewController
+        //4) Scene Coordinator binds second VC and VM together
+        vc.bindViewModel(to: viewModel)
+        return vc
     }
   }
 }

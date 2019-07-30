@@ -57,61 +57,62 @@ struct TaskService: TaskServiceType {
   @discardableResult
   func createTask(title: String) -> Observable<TaskItem> {
     let result = withRealm("creating") { realm -> Observable<TaskItem> in
-      let task = TaskItem()
-      task.title = title
-      try realm.write {
-        task.uid = (realm.objects(TaskItem.self).max(ofProperty: "uid") ?? 0) + 1
-        realm.add(task)
-      }
-        return .just(task) // only can compile in this way due to the context of return Observable type
+        let task = TaskItem()
+        task.title = title
+        try realm.write {
+            task.uid = (realm.objects(TaskItem.self).max(ofProperty: "uid") ?? 0) + 1
+            realm.add(task)
+        }
+        return Observable.just(task)
     }
+    
     return result ?? Observable.error(TaskServiceError.creationFailed)
   }
 
   @discardableResult
   func delete(task: TaskItem) -> Observable<Void> {
-    let result = withRealm("deleting") { realm-> Observable<Void> in
-      try realm.write {
-        realm.delete(task)
-      }
-      return .empty()
+    let result = withRealm("deleting") { realm -> Observable<Void> in
+        try realm.write {
+            realm.delete(task)
+        }
+        return Observable.empty()
     }
-    return result ?? .error(TaskServiceError.deletionFailed(task))
+    
+    return result ?? Observable.error(TaskServiceError.deletionFailed(task))
   }
 
   @discardableResult
   func update(task: TaskItem, title: String) -> Observable<TaskItem> {
     let result = withRealm("updating title") { realm -> Observable<TaskItem> in
-      try realm.write {
-        task.title = title
-      }
-      return .just(task)
+        try realm.write {
+            task.title = title
+        }
+        return Observable.just(task)
     }
-    return result ?? .error(TaskServiceError.updateFailed(task))
+    return result ?? Observable.error(TaskServiceError.updateFailed(task))
   }
 
   @discardableResult
   func toggle(task: TaskItem) -> Observable<TaskItem> {
     let result = withRealm("toggling") { realm -> Observable<TaskItem> in
-      try realm.write {
-        if task.checked == nil {
-          task.checked = Date()
-        } else {
-          task.checked = nil
+        try realm.write {
+            if task.checked == nil {
+                task.checked = Date()
+            } else {
+                task.checked = nil
+            }
         }
-      }
-      return .just(task)
+        return Observable.just(task)
     }
-    return result ?? .error(TaskServiceError.toggleFailed(task))
+    return result ?? Observable.error(TaskServiceError.toggleFailed(task))
   }
 
   func tasks() -> Observable<Results<TaskItem>> {
     let result = withRealm("getting tasks") { realm -> Observable<Results<TaskItem>> in
-      let realm = try Realm()
-      let tasks = realm.objects(TaskItem.self)
-      return Observable.collection(from: tasks)
+        let tasks = realm.objects(TaskItem.self)
+        return Observable.collection(from: tasks)
     }
-    return result ?? .empty()
+    return result ?? Observable.empty()
   }
 
   //challenge 2
@@ -128,11 +129,11 @@ struct TaskService: TaskServiceType {
   func statistics() -> Observable<TaskStatistics> {
     let result = withRealm("getting statistics") { realm -> Observable<TaskStatistics> in
       let tasks = realm.objects(TaskItem.self)
-      let todoTasks = tasks.filter("checked != nil")
+      let doneTasks = tasks.filter("checked != nil")
       return .combineLatest(
         Observable.collection(from: tasks)
           .map { $0.count },
-        Observable.collection(from: todoTasks)
+        Observable.collection(from: doneTasks)
           .map { $0.count }) { all, done in
         (todo: all - done, done: done)
       }

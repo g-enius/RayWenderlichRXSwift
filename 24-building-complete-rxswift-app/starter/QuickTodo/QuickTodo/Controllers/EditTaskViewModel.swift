@@ -25,32 +25,32 @@ import RxSwift
 import Action
 
 struct EditTaskViewModel {
-
-  let itemTitle: String
-  let onUpdate: Action<String, Void>
-  let onCancel: CocoaAction!
-  let disposeBag = DisposeBag()
+    let itemTitle: String
+    let onUpdate: Action<String, Void>
+    let onCancel: CocoaAction
+    let disposeBag = DisposeBag()
     
-  init(task: TaskItem, coordinator: SceneCoordinatorType, updateAction: Action<String, Void>, cancelAction: CocoaAction? = nil) {
-    itemTitle = task.title
-    onUpdate = updateAction
-    onCancel = CocoaAction {
-      if let cancelAction = cancelAction {
-        cancelAction.execute()
-      }
-    //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
-      return coordinator.pop()
-        .asObservable().map { _ in }
-    }
-
-    onUpdate
-        .executionObservables// return after action execution
-        .debug("executionObservables")
-      .take(1)
-      .subscribe(onNext: { _ in
+    init(task: TaskItem, coordinator: SceneCoordinatorType, updateAction: Action<String, Void>, cancelAction: CocoaAction? = nil) {
+        itemTitle = task.title
+        onUpdate = updateAction
+        onCancel = CocoaAction {
+            if let cancelAction = cancelAction {
+                cancelAction.execute()
+            }
         //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
-        coordinator.pop()
-      })
-      .disposed(by: disposeBag)
-  }
+
+            return coordinator.pop()
+            .asObservable()
+                .map{_ in }
+        }
+        
+        onUpdate
+            .executionObservables //return a observable
+            .take(1)
+            .subscribe(onNext: { _ in
+                //push/present is decided by parent view model, but pop/dismiss is decided inside its own view model
+                coordinator.pop()
+            })
+            .disposed(by: disposeBag)
+    }
 }

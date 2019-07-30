@@ -34,6 +34,7 @@ enum TaskServiceError: Error {
 //challenge2
 typealias TaskStatistics = (todo: Int, done: Int)
 
+//The purpose of this protocol is for testing purpose. Tests can instantiate a testTaskService to do mocks
 protocol TaskServiceType {
   @discardableResult
   func createTask(title: String) -> Observable<TaskItem>

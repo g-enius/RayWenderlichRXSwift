@@ -43,8 +43,9 @@ class SceneCoordinator: SceneCoordinatorType {
   }
 
   @discardableResult
-  func transition(to scene: Scene, type: SceneTransitionType) -> Observable<Void> {
+  func transition(to scene: Scene, type: SceneTransitionType) -> Completable {
     let subject = PublishSubject<Void>()
+    //3) Scene Coordinator instantiates the Second View Controller
     let viewController = scene.viewController()
     switch type {
       case .root:
@@ -57,10 +58,14 @@ class SceneCoordinator: SceneCoordinatorType {
           fatalError("Can't push a view controller without a current navigation controller")
         }
         // one-off subscription to be notified when push complete
-        _ = navigationController.rx.delegate
-          .sentMessage(#selector(UINavigationControllerDelegate.navigationController(_:didShow:animated:)))
+        _ = navigationController.rx
+//            .delegate.sentMessage(#selector(UINavigationControllerDelegate.navigationController(_:didShow:animated:)))
+            .didShow
+            .debug("coordinator")
           .map { _ in }
           .bind(to: subject)
+    //5) Scene Coordinator pushs/presents second VC
+
         navigationController.pushViewController(viewController, animated: true)
         currentViewController = SceneCoordinator.actualViewController(for: viewController)
 
@@ -76,7 +81,7 @@ class SceneCoordinator: SceneCoordinatorType {
   }
 
   @discardableResult
-  func pop(animated: Bool) -> Observable<Void> {
+  func pop(animated: Bool) -> Completable {
     let subject = PublishSubject<Void>()
     if let presenter = currentViewController.presentingViewController {
       // dismiss a modal controller
@@ -98,6 +103,8 @@ class SceneCoordinator: SceneCoordinatorType {
     } else {
       fatalError("Not a modal, no navigation controller: can't navigate back from \(currentViewController)")
     }
-    return subject.asObservable().take(1).ignoreElements()
+    return subject.asObservable()
+		.take(1)
+		.ignoreElements()
   }
 }

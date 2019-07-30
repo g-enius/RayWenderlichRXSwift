@@ -29,13 +29,15 @@ extension Scene {
     case .tasks(let viewModel):
       let nc = storyboard.instantiateViewController(withIdentifier: "Tasks") as! UINavigationController
       var vc = nc.viewControllers.first as! TasksViewController
+//      As (self.)viewModel is mutated in bindViewModel(to:), so self (a ViewController) must be a var.
       vc.bindViewModel(to: viewModel)
       return nc
 
     case .editTask(let viewModel):
-      let nc = storyboard.instantiateViewController(withIdentifier: "EditTask") as! UINavigationController
-      var vc = nc.viewControllers.first as! EditTaskViewController
-      vc.bindViewModel(to: viewModel)
+        var nc = storyboard.instantiateViewController(withIdentifier: "EditTask") as! EditTaskViewController
+//      var vc = nc.viewControllers.first as! EditTaskViewController
+    //4) Scene Coordinator binds second VC and VM together
+      nc.bindViewModel(to: viewModel)
       return nc
     }
   }
