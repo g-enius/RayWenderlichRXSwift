@@ -93,6 +93,8 @@ class SceneCoordinator: SceneCoordinatorType {
     } else if let navigationController = currentViewController.navigationController {
         // navigate up the stack
         // one-off subscription to be notified when pop complete
+        
+        // it creates a UINavigationController DelegateProxy, an RxSwift proxy which can intercept messages while forwarding messages to the actual delegate
         _ = navigationController.rx
         .didShow
         .map { _ in }

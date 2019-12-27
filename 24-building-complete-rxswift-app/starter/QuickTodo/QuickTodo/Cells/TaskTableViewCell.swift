@@ -48,6 +48,7 @@ class TaskItemTableViewCell: UITableViewCell {
         .disposed(by: disposeBag)
     
   }
+//“Finally, don’t forget to dispose your subscriptions. Failing to do so would lead to some nasty surprises when the cell is reused by the table view! Add the following:”
 
     override func prepareForReuse() {
         disposeBag = DisposeBag()
